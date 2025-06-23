@@ -1,0 +1,23 @@
+INFO 2025-06-23 06:26:13,247 autoreload 10 281473503309856 Watching for file changes with StatReloader
+INFO 2025-06-23 06:28:20,472 autoreload 9 281473538203680 Watching for file changes with StatReloader
+INFO 2025-06-23 06:37:33,808 autoreload 10 281473530187808 Watching for file changes with StatReloader
+INFO 2025-06-23 06:39:38,998 autoreload 10 281473327026208 Watching for file changes with StatReloader
+INFO 2025-06-23 06:59:29,880 autoreload 10 281473445752864 Watching for file changes with StatReloader
+INFO 2025-06-23 07:08:54,523 autoreload 9 281472946946080 Watching for file changes with StatReloader
+INFO 2025-06-23 07:09:41,244 autoreload 10 281473202429984 Watching for file changes with StatReloader
+ERROR 2025-06-23 07:32:16,413 exception 10 281473124987296 Invalid HTTP_HOST header: 'django:8000'. You may need to add 'django' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'django:8000'. You may need to add 'django' to ALLOWED_HOSTS.
+WARNING 2025-06-23 07:32:16,441 log 10 281473124987296 Bad Request: /api/upload/
+WARNING 2025-06-23 07:32:16,442 basehttp 10 281473124987296 "POST /api/upload/ HTTP/1.1" 400 66608

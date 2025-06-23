@@ -1,0 +1,19 @@
+[server]
+# Enable file watching for development
+fileWatcherType = "poll"
+runOnSave = true
+
+# Development server settings
+address = "0.0.0.0"
+port = 8501
+
+# Disable CORS for development
+enableCORS = false
+
+# Development theme
+[theme]
+base = "light"
+
+# Logger settings for development
+[logger]
+level = "info" 

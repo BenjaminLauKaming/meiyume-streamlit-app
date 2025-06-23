@@ -1,0 +1,123 @@
+# Docker Compose file for development environment
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: cad_analyzer_db_dev
+    environment:
+      POSTGRES_DB: cad_analyzer_dev
+      POSTGRES_USER: cad_user
+      POSTGRES_PASSWORD: cad_password_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cad_analyzer_network
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: cad_analyzer_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - cad_analyzer_network
+
+  # Django Backend
+  django:
+    build:
+      context: .
+      dockerfile: docker/django/Dockerfile.dev
+    container_name: cad_analyzer_django_dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.development
+      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/cad_analyzer_dev
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - media_files_dev:/app/media
+      - static_files_dev:/app/staticfiles
+    depends_on:
+      - db
+      - redis
+    networks:
+      - cad_analyzer_network
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # Streamlit Frontend
+  streamlit:
+    build:
+      context: .
+      dockerfile: docker/streamlit/Dockerfile.dev
+    container_name: cad_analyzer_streamlit_dev
+    environment:
+      - DJANGO_API_URL=http://django:8000
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./streamlit_app:/app
+      - ./streamlit_app/.streamlit:/app/.streamlit
+    depends_on:
+      - django
+    networks:
+      - cad_analyzer_network
+    command: streamlit run main.py --server.address 0.0.0.0 --server.fileWatcherType poll --server.runOnSave true
+
+  # n8n Workflow Engine
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: cad_analyzer_n8n_dev
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - WEBHOOK_URL=http://localhost:5678
+      - GENERIC_TIMEZONE=UTC
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data_dev:/home/node/.n8n
+    networks:
+      - cad_analyzer_network
+
+  # Celery Worker (for background tasks)
+  celery:
+    build:
+      context: .
+      dockerfile: docker/django/Dockerfile.dev
+    container_name: cad_analyzer_celery_dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.development
+      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/cad_analyzer_dev
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - media_files_dev:/app/media
+    depends_on:
+      - db
+      - redis
+    networks:
+      - cad_analyzer_network
+    command: celery -A ai_cad_analyzer worker -l info
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+  media_files_dev:
+  static_files_dev:
+  n8n_data_dev:
+
+networks:
+  cad_analyzer_network:
+    driver: bridge 

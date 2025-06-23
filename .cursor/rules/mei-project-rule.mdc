@@ -1,0 +1,39 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+project:
+  name: ai-cad-analyzer
+  language: python
+  description: >
+    A full-stack application with a Streamlit frontend and a Django backend for analyzing 
+    2D CAD PDF drawings using AI. The app extracts part-contact data via a Google Gemini model, 
+    orchestrated through an n8n workflow. Outputs are provided as structured CSV or reports.
+
+rules:
+  - description: >
+      The frontend is built with Streamlit. Users upload 2D CAD PDF drawings via Streamlit, 
+      which interfaces with a Django REST API.
+  - description: >
+      Django handles user authentication, upload logging, file storage, and metadata management. 
+      It forwards the uploaded files and metadata to the n8n webhook endpoint.
+  - description: >
+      n8n is configured to receive HTTP POST requests. It triggers a Google Gemini model call 
+      to analyze the drawing and extract dimensions, tolerance data, and part relationships.
+  - description: >
+      Include prompt-tuning logic in the n8n node before calling Gemini, to improve result accuracy 
+      on complex engineering drawings.
+  - description: >
+      n8n responds with a downloadable CSV file or a link to a report, which Django stores and 
+      Streamlit presents to the user.
+  - description: >
+      Use Django REST Framework for building the API endpoints and Celery for managing asynchronous 
+      processing if needed in future versions.
+  - description: >
+      The backend uses PostgreSQL as the primary database, configured via Django's settings.
+      It stores user data, file uploads, metadata, and links to processed results.
+  - description: >
+      Django is integrated with Microsoft Azure Active Directory. All users log in using 
+      their company Microsoft credentials via OAuth2 (Azure AD SSO).
+
