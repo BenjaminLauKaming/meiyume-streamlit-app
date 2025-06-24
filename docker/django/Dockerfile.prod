@@ -44,20 +44,21 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
 # Copy Python dependencies from builder stage
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /root/.local /home/appuser/.local
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Copy project
 COPY backend/ /app/
 
 # Create directories and set permissions
 RUN mkdir -p /app/media /app/staticfiles /app/logs \
-    && chown -R appuser:appuser /app
+    && chown -R appuser:appuser /app /home/appuser/.local
 
 # Switch to non-root user
 USER appuser
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Collect static files (will be done at runtime)
+# RUN python manage.py collectstatic --noinput
 
 # Make port 8000 available
 EXPOSE 8000

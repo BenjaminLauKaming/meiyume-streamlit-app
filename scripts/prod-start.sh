@@ -3,22 +3,19 @@
 # Production Environment Startup Script
 echo "🚀 Starting CAD Analyzer Production Environment..."
 
-# Check if .env file exists
-if [ ! -f .env ]; then
-    echo "❌ .env file not found! Please create it from env_template.txt"
-    echo "📝 Make sure to configure production settings:"
-    echo "   • Set DEBUG=False"
-    echo "   • Set strong SECRET_KEY"
-    echo "   • Configure database credentials"
-    echo "   • Set ALLOWED_HOSTS"
-    echo "   • Configure AWS S3 for file storage"
-    echo "   • Set up SSL certificates"
+# Check if .env.prod file exists
+if [ ! -f .env.prod ]; then
+    echo "❌ .env.prod file not found! Please run ./scripts/setup-production.sh first"
+    echo "📝 Or create .env.prod manually from env_template.txt"
     exit 1
 fi
 
+# Copy .env.prod to .env for docker-compose
+cp .env.prod .env
+
 # Verify production environment variables
 source .env
-if [ "$DEBUG" = "True" ]; then
+if [ "$DEBUG" = "False" ]; then
     echo "❌ DEBUG is set to True! This is not safe for production."
     echo "📝 Please set DEBUG=False in your .env file"
     exit 1
