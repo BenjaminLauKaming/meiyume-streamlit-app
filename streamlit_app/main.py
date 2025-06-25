@@ -6,6 +6,10 @@ from dotenv import load_dotenv
 import time
 from pathlib import Path
 
+# Import assistant modules
+from engAssistant import engineering_assistant
+from qualityAssistant import quality_assistant
+
 load_dotenv()
 
 # Configuration
@@ -15,8 +19,8 @@ RESULTS_ENDPOINT = f"{DJANGO_API_URL}/api/results/"
 
 # Page configuration
 st.set_page_config(
-    page_title="AI CAD Analyzer",
-    page_icon="🔧",
+    page_title="AI CAD Analyzer Hub",
+    page_icon=" ",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -31,11 +35,13 @@ def init_session_state():
         st.session_state.user_info = None
     if 'upload_history' not in st.session_state:
         st.session_state.upload_history = []
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Home"
 
 def authenticate_user():
     """Handle user authentication with Azure AD"""
     st.title("🔐 Authentication Required")
-    st.info("Please authenticate with your Microsoft/Azure AD credentials to access the CAD Analyzer.")
+    st.info("Please authenticate with your Microsoft/Azure AD credentials to access the CAD Analyzer Hub.")
     
     # For demo purposes, we'll use a simple token input
     # In production, this would integrate with Azure AD OAuth2 flow
@@ -110,169 +116,218 @@ def get_processing_status(task_id):
     except requests.exceptions.RequestException:
         return None
 
-def main_app():
-    """Main application interface"""
-    st.title("🔧 AI CAD Analyzer")
-    st.markdown("### Analyze 2D CAD PDF drawings with AI-powered dimension extraction")
-    
-    # Sidebar user info
+def sidebar_navigation():
+    """Render sidebar navigation"""
     with st.sidebar:
+        st.title("AI Agent Hub")
+        st.markdown("---")
+        
+        # User info
         st.subheader("👤 User Info")
         st.write(f"**Username:** {st.session_state.user_info['username']}")
         st.write(f"**Email:** {st.session_state.user_info['email']}")
+        st.markdown("---")
         
+        # Navigation menu
+        st.subheader("🧭 Navigation")
+        
+        # Home button
+        if st.button("Home", use_container_width=True, 
+                    type="primary" if st.session_state.current_page == "Home" else "secondary"):
+            st.session_state.current_page = "Home"
+            st.rerun()
+        
+        # Engineering Assistant button
+        if st.button("Engineering Assistant", use_container_width=True,
+                    type="primary" if st.session_state.current_page == "Engineering" else "secondary"):
+            st.session_state.current_page = "Engineering"
+            st.rerun()
+        
+        # Quality Assistant button
+        if st.button("Quality Assistant", use_container_width=True,
+                    type="primary" if st.session_state.current_page == "Quality" else "secondary"):
+            st.session_state.current_page = "Quality"
+            st.rerun()
 
+        # Complaint Assistant button
+        if st.button("Complaint Assistant", use_container_width=True,
+                    type="primary" if st.session_state.current_page == "Complaint" else "secondary"):
+            st.session_state.current_page = "Complaint"
+            st.rerun()
+        
+        st.markdown("---")
+        
+        # System status
+        st.subheader("🔄 System Status")
+        try:
+            response = requests.get(f"{DJANGO_API_URL}/api/health/", timeout=5)
+            if response.status_code == 200:
+                st.success("🟢 Backend: Online")
+            else:
+                st.error("🔴 Backend: Issues")
+        except:
+            st.error("🔴 Backend: Offline")
+        
+        st.markdown("---")
+        
         # Logout button
-        if st.button("Logout"):
+        if st.button("🚪 Logout", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.access_token = None
             st.session_state.user_info = None
+            st.session_state.current_page = "Home"
             st.rerun()
+
+def home_page():
+    """Render the main home/hub page"""
+    # Header
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.title("AI Agent Hub")
+        st.markdown("### Welcome to your Engineering & Quality Control Center")
+        st.markdown("Developed by Benjamin Lau")
     
-    # Main content
-    col1, col2 = st.columns([2, 1])
+    st.markdown("---")
+    
+    # Overview cards
+    col1, col2, col3= st.columns(3)
     
     with col1:
-        st.subheader("📁 Upload CAD Drawing")
+        st.markdown("""
+        <div style="background: linear-gradient(100deg, #667eea 0%, #764ba2 100%); 
+                    padding: 2rem; border-radius: 15px; color: white; margin: 1rem 0;">
+            <h3>Engineering Assistant</h3>
+            <p>Advanced CAD drawing analysis powered by AI</p>
+            <ul>
+                <li> Dimension extraction</li>
+                <li> Tolerance analysis</li>
+                <li> Part relationship mapping</li>
+                <li> Technical report generation</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # File upload
-        uploaded_file = st.file_uploader(
-            "Choose a PDF file",
-            type=['pdf'],
-            help="Upload a 2D CAD drawing in PDF format"
-        )
-        
-        if uploaded_file is not None:
-            # Display file info
-            st.success(f"File uploaded: {uploaded_file.name}")
-            st.info(f"File size: {uploaded_file.size / 1024:.2f} KB")
-            
-            # Metadata input
-            with st.expander("📋 Additional Information (Optional)"):
-                project_name = st.text_input("Project Name")
-                drawing_number = st.text_input("Drawing Number")
-                revision = st.text_input("Revision")
-                notes = st.text_area("Notes")
-            
-            # Analysis options
-            st.subheader("⚙️ Analysis Options")
-            extract_dimensions = st.checkbox("Extract Dimensions", value=True)
-            extract_tolerances = st.checkbox("Extract Tolerances", value=True)
-            part_relationships = st.checkbox("Analyze Part Relationships", value=True)
-            
-            # Process button
-            if st.button("🚀 Start Analysis", type="primary"):
-                metadata = {
-                    "project_name": project_name,
-                    "drawing_number": drawing_number,
-                    "revision": revision,
-                    "notes": notes,
-                    "analysis_options": {
-                        "extract_dimensions": extract_dimensions,
-                        "extract_tolerances": extract_tolerances,
-                        "part_relationships": part_relationships
-                    }
-                }
-                
-                with st.spinner("Uploading file and starting analysis..."):
-                    result = upload_file_to_django(uploaded_file, metadata)
-                    
-                    if result:
-                        st.success("File uploaded successfully!")
-                        task_id = result.get("task_id")
-                        
-                        if task_id:
-                            st.session_state.upload_history.append({
-                                "task_id": task_id,
-                                "filename": uploaded_file.name,
-                                "timestamp": time.time(),
-                                "status": "processing"
-                            })
-                            
-                            # Show processing status
-                            status_placeholder = st.empty()
-                            progress_bar = st.progress(0)
-                            
-                            # Poll for results
-                            max_attempts = 30  # 5 minutes max
-                            for attempt in range(max_attempts):
-                                status_data = get_processing_status(task_id)
-                                
-                                if status_data:
-                                    status = status_data.get("status", "processing")
-                                    progress = status_data.get("progress", 0)
-                                    
-                                    status_placeholder.info(f"Status: {status.title()}")
-                                    progress_bar.progress(min(progress / 100, 1.0))
-                                    
-                                    if status == "completed":
-                                        st.success("Analysis completed!")
-                                        
-                                        # Display results
-                                        if "results" in status_data:
-                                            display_results(status_data["results"])
-                                        
-                                        # Update history
-                                        for item in st.session_state.upload_history:
-                                            if item["task_id"] == task_id:
-                                                item["status"] = "completed"
-                                        break
-                                    elif status == "failed":
-                                        st.error("Analysis failed. Please try again.")
-                                        break
-                                
-                                time.sleep(10)  # Wait 10 seconds before next check
-                            else:
-                                st.warning("Analysis is taking longer than expected. Check back later.")
+        if st.button("🚀 Launch Engineering Assistant", use_container_width=True, type="primary"):
+            st.session_state.current_page = "Engineering"
+            st.rerun()
     
     with col2:
-        st.subheader("📊 Recent Uploads")
+        st.markdown("""
+        <div style="background: linear-gradient(100deg, #f093fb 0%, #f5576c 100%); 
+                    padding: 2rem; border-radius: 15px; color: white; margin: 1rem 0;">
+            <h3>Quality Assistant</h3>
+            <p>Comprehensive quality control and compliance tools</p>
+            <ul>
+                <li> Quality standards verification</li>
+                <li> Compliance checklists</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        if st.session_state.upload_history:
-            for item in reversed(st.session_state.upload_history[-5:]):  # Show last 5
-                with st.container():
-                    st.markdown(f"**{item['filename']}**")
-                    st.markdown(f"Status: {item['status'].title()}")
-                    st.markdown(f"Time: {time.strftime('%H:%M:%S', time.localtime(item['timestamp']))}")
-                    st.markdown("---")
-        else:
-            st.info("No recent uploads")
+        if st.button("🎯 Launch Quality Assistant", use_container_width=True, type="primary"):
+            st.session_state.current_page = "Quality"
+            st.rerun()
 
-def display_results(results):
-    """Display analysis results"""
-    st.subheader("📈 Analysis Results")
+    with col3:
+        st.markdown("""
+        <div style="background: linear-gradient(100deg, #87ceeb 0%, #B9EBFF 100%);
+                    padding: 2rem; border-radius: 15px; color: white; margin: 1rem 0;">
+            <h3>Complaint Assistant</h3>
+            <p>Comprehensive quality control and compliance tools</p>
+            <ul>
+                <li> Chat Bot</li>
+                <li> Potential Solutions</li>
+                <li> Root cause Analysis</li>
+                <li> History Searching</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("💣 Launch Complaint Assistant", use_container_width=True, type="primary"):
+            st.session_state.current_page = "Complaint"
+            st.rerun()
     
-    # Create tabs for different result types
-    tabs = st.tabs(["📏 Dimensions", "🎯 Tolerances", "🔗 Relationships", "📥 Downloads"])
+    st.markdown("---")
     
-    with tabs[0]:
-        if "dimensions" in results:
-            st.json(results["dimensions"])
-        else:
-            st.info("No dimension data available")
+    # Recent activity and stats
+    col1, col2, col3 = st.columns(3)
     
-    with tabs[1]:
-        if "tolerances" in results:
-            st.json(results["tolerances"])
-        else:
-            st.info("No tolerance data available")
+    with col1:
+        st.metric(
+            label="📊 Total Analyses",
+            value=len(st.session_state.upload_history),
+            delta=f"+{len([h for h in st.session_state.upload_history if time.time() - h.get('timestamp', 0) < 86400])} today"
+        )
     
-    with tabs[2]:
-        if "relationships" in results:
-            st.json(results["relationships"])
-        else:
-            st.info("No relationship data available")
+    with col2:
+        completed = len([h for h in st.session_state.upload_history if h.get('status') == 'completed'])
+        st.metric(
+            label="✅ Completed",
+            value=completed,
+            delta=f"{(completed/max(len(st.session_state.upload_history), 1)*100):.1f}% success rate"
+        )
     
-    with tabs[3]:
-        st.subheader("Download Results")
-        if "download_urls" in results:
-            for file_type, url in results["download_urls"].items():
-                st.download_button(
-                    label=f"Download {file_type.upper()}",
-                    data=requests.get(url).content,
-                    file_name=f"analysis_results.{file_type}",
-                    mime=f"application/{file_type}"
-                )
+    with col3:
+        processing = len([h for h in st.session_state.upload_history if h.get('status') == 'processing'])
+        st.metric(
+            label="⏳ Processing",
+            value=processing
+        )
+    
+    # Recent uploads section
+    if st.session_state.upload_history:
+        st.subheader("📈 Recent Activity")
+        
+        # Create a nice table of recent uploads
+        recent_uploads = sorted(st.session_state.upload_history, 
+                              key=lambda x: x.get('timestamp', 0), reverse=True)[:5]
+        
+        for upload in recent_uploads:
+            with st.expander(f"📄 {upload.get('filename', 'Unknown')} - {upload.get('status', 'Unknown').title()}"):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.write(f"**Status:** {upload.get('status', 'Unknown').title()}")
+                with col2:
+                    st.write(f"**Time:** {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(upload.get('timestamp', 0)))}")
+                with col3:
+                    st.write(f"**Task ID:** {upload.get('task_id', 'N/A')}")
+    
+    # Quick actions
+    st.markdown("---")
+    st.subheader("🚀 Quick Actions")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("📁 Upload New Drawing", use_container_width=True):
+            st.session_state.current_page = "Engineering"
+            st.rerun()
+    
+    with col2:
+        if st.button("📊 View Analytics", use_container_width=True):
+            st.info("Analytics dashboard coming soon!")
+    
+    with col3:
+        if st.button("⚙️ Settings", use_container_width=True):
+            st.info("Settings panel coming soon!")
+    
+    with col4:
+        if st.button("❓ Help & Docs", use_container_width=True):
+            st.info("Documentation coming soon!")
+
+def main_app():
+    """Main application interface with navigation"""
+    sidebar_navigation()
+    
+    # Render the appropriate page based on navigation
+    if st.session_state.current_page == "Home":
+        home_page()
+    elif st.session_state.current_page == "Engineering":
+        engineering_assistant()
+    elif st.session_state.current_page == "Quality":
+        quality_assistant()
+    elif st.session_state.current_page == "Complaint":
+        complaint_assistant()
 
 def main():
     """Main application entry point"""
