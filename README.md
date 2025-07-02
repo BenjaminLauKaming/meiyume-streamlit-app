@@ -1,113 +1,61 @@
 # Meiyume AI Assistant
 
-A comprehensive full-stack application for multiple AI-powered assistants. The system currently supports CAD analysis and is designed to easily accommodate additional AI assistants through a modular architecture.
+A comprehensive full-stack application for multiple AI-powered assistants. The system currently supports CAD analysis and is designed to easily accommodate additional AI assistants through a modular architecture with JWT authentication and Azure AD integration.
 
-## Architecture
+## 🏗️ Architecture Overview
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Streamlit     │    │     Django      │    │      n8n        │
 │   Frontend      │◄──►│    Backend      │◄──►│   Workflows     │
-│                 │    │   REST API      │    │                 │
+│   (Port 8501)   │    │   REST API      │    │   (Port 5678)   │
+│                 │    │   (Port 8000)   │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-                              │                         │
-                              │                         │
-                       ┌─────────────┐         ┌─────────────┐
-                       │ PostgreSQL  │         │   Multiple  │
-                       │  Database   │         │   AI Models │
-                       └─────────────┘         └─────────────┘
+         │                       │                       │
+         │                       │                       │
+         │              ┌────────┴────────┐              │
+         │              │                 │              │
+         │         ┌─────────────┐  ┌─────────────┐      │
+         │         │ PostgreSQL  │  │   Redis     │      │
+         │         │  Database   │  │   (Port     │      │
+         │         │ (Port 5433) │  │   6379)     │      │
+         │         └─────────────┘  └─────────────┘      │
+         │                                              │
+         │         ┌─────────────┐         ┌─────────────┐
+         └────────►│   JWT       │         │   Multiple  │
+                   │   Auth      │         │   AI Models │
+                   │   Tokens    │         │ (Gemini,    │
+                   └─────────────┘         │  OpenAI)    │
+                                           └─────────────┘
 ```
 
-## Current AI Assistants
+## 🔐 Authentication & Security
 
-### 1. CAD Analysis Assistant
-- Analyzes 2D CAD PDF drawings using Google Gemini AI
-- Extracts dimensions, tolerances, and part relationships
-- Generates structured CSV reports and analysis documents
+### JWT Authentication
+- **Access Token Lifetime**: 24 hours
+- **Refresh Token Lifetime**: 7 days
+- **Token Rotation**: Enabled
+- **Token Blacklisting**: Enabled
+- **Algorithm**: HS256
 
-### 2. Quality Assistant (Coming Soon)
-- Quality control and inspection analysis
-- Defect detection and classification
-- Quality metrics and reporting
+### Azure AD Integration
+- **SSO**: Single Sign-On with Microsoft credentials
+- **OAuth2**: Standard OAuth2 flow
+- **Enterprise**: Company-wide authentication
 
-### 3. Complaint Assistant (Coming Soon)
-- Customer complaint analysis and categorization
-- Sentiment analysis and priority assessment
-- Automated response suggestions
+### API Security
+- **CORS**: Configured for specific origins
+- **CSRF Protection**: Enabled
+- **Rate Limiting**: Configurable
+- **File Upload Validation**: PDF files only, 10MB limit
 
-## Project Structure
+## 🚀 Quick Start Commands
 
-```
-meiyume_ai_assistant/
-├── streamlit_app/         # Streamlit UI code
-│   ├── main.py           # Main application entry point
-│   ├── cadAssistant.py   # CAD analysis interface
-│   ├── qualityAssistant.py # Quality analysis interface
-│   ├── complaintAssistant.py # Complaint analysis interface
-│   └── auth_utils.py     # Authentication utilities
-├── backend/               # Django project
-│   ├── manage.py
-│   ├── meiyume_core/     # Core Django app for shared functionality
-│   │   ├── models.py     # Base models and shared functionality
-│   │   ├── views.py      # Shared API views
-│   │   ├── serializers.py # Shared serializers
-│   │   ├── urls.py       # Core URL patterns
-│   │   ├── admin.py      # Admin interface
-│   │   └── utils.py      # Shared utilities
-│   ├── assistants/       # Individual assistant modules
-│   │   ├── cad/          # CAD analysis assistant
-│   │   │   ├── models.py
-│   │   │   ├── views.py
-│   │   │   ├── serializers.py
-│   │   │   └── workflows.py
-│   │   ├── quality/      # Quality assistant (future)
-│   │   └── complaint/    # Complaint assistant (future)
-│   └── meiyume_ai_assistant/ # Django settings, urls, etc.
-│       ├── settings.py
-│       ├── urls.py
-│       └── wsgi.py
-├── n8n/                   # n8n workflow configurations
-│   ├── cad_analysis_workflow.json
-│   ├── quality_analysis_workflow.json (future)
-│   └── complaint_analysis_workflow.json (future)
-├── requirements.txt       # Python dependencies
-├── env_template.txt       # Environment variables template
-└── README.md             # This file
-```
-
-## Features
-
-### Core Platform Features
-- **Modular Architecture**: Easy to add new AI assistants
-- **Unified Authentication**: Azure AD integration with SSO
-- **Multi-Assistant Support**: Switch between different AI assistants
-- **Real-time Processing**: Live status updates via webhooks
-- **Results Export**: CSV and report downloads for all assistants
-- **Admin Interface**: Django admin for system management
-
-### CAD Analysis Features
-- **File Upload**: Secure PDF upload with validation
-- **AI Analysis**: Google Gemini-powered extraction of:
-  - Dimensions and measurements
-  - Tolerance specifications
-  - Part relationships and assembly info
-  - Material specifications
-- **Engineering Reports**: Detailed analysis with visualizations
-
-## Setup Instructions
-
-### Prerequisites
-
-- Python 3.11+
-- Node.js 18+ (for n8n)
-- Redis (for Celery, optional)
-- PostgreSQL (for production)
-
-### 1. Clone and Setup Environment
-
+### Development Setup
 ```bash
+# Clone and setup
 git clone <repository-url>
-cd meiyume_ai_assistant
+cd Meiyume_project
 
 # Create virtual environment
 python -m venv venv
@@ -115,88 +63,387 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-### 2. Environment Configuration
-
-Copy the environment template and configure:
-
-```bash
+# Setup environment
 cp env_template.txt .env
+# Edit .env with your configuration
+
+# Database setup
+cd backend
+./run_django.sh makemigrations
+./run_django.sh migrate
+./run_django.sh createsuperuser
+
+# Start services
+docker-compose up -d
 ```
 
-Edit `.env` with your configuration:
+### Useful Django Commands
+```bash
+cd backend
 
-```env
+# Use the helper script (recommended)
+./run_django.sh check              # Check Django configuration
+./run_django.sh makemigrations     # Create migrations
+./run_django.sh migrate            # Apply migrations
+./run_django.sh runserver          # Start development server
+./run_django.sh createsuperuser    # Create admin user
+./run_django.sh collectstatic      # Collect static files
+./run_django.sh shell              # Django shell
+
+# Or set environment manually
+export DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.development
+python manage.py [command]
+```
+
+### Docker Commands
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f django
+docker-compose logs -f streamlit
+docker-compose logs -f n8n
+
+# Stop services
+docker-compose down
+
+# Rebuild and restart
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+
+# Reset database (WARNING: deletes all data)
+docker-compose down -v
+docker-compose up -d
+```
+
+### Database Commands
+```bash
+# Connect to PostgreSQL
+docker-compose exec db psql -U cad_user -d meiyume_ai_assistant_dev
+
+# Backup database
+docker-compose exec db pg_dump -U cad_user meiyume_ai_assistant_dev > backup.sql
+
+# Restore database
+docker-compose exec -T db psql -U cad_user -d meiyume_ai_assistant_dev < backup.sql
+```
+
+## 📁 Project Structure
+
+```
+Meiyume_project/
+├── backend/                     # Django backend
+│   ├── manage.py               # Django management script
+│   ├── run_django.sh           # Helper script for Django commands
+│   ├── meiyume_core/           # Core shared functionality
+│   │   ├── models.py           # Base models (BaseUpload, UserPreferences, etc.)
+│   │   ├── views.py            # Shared views (Dashboard, Health, Preferences)
+│   │   ├── serializers.py      # Shared serializers
+│   │   ├── urls.py             # Core URL patterns
+│   │   ├── admin.py            # Core admin interface
+│   │   └── migrations/         # Core migrations
+│   ├── assistants/             # Individual assistant modules
+│   │   ├── cad/                # CAD Analysis Assistant
+│   │   │   ├── models.py       # CADUpload, CADAnalysisOptions, CADAnalysisResult
+│   │   │   ├── views.py        # CAD-specific views and webhooks
+│   │   │   ├── serializers.py  # CAD-specific serializers
+│   │   │   ├── urls.py         # CAD API routes
+│   │   │   ├── admin.py        # CAD admin interface
+│   │   │   ├── utils.py        # CAD utilities (n8n integration)
+│   │   │   └── migrations/     # CAD migrations
+│   │   ├── quality/            # Quality Assistant (placeholder)
+│   │   └── complaint/          # Complaint Assistant (placeholder)
+│   └── meiyume_ai_assistant/   # Django project settings
+│       ├── settings/           # Environment-specific settings
+│       │   ├── base.py         # Base settings
+│       │   ├── development.py  # Development settings
+│       │   └── production.py   # Production settings
+│       ├── urls.py             # Main URL configuration
+│       ├── wsgi.py             # WSGI configuration
+│       └── asgi.py             # ASGI configuration
+├── streamlit_app/              # Streamlit frontend
+│   ├── main.py                # Multi-assistant interface
+│   ├── engAssistant.py        # CAD Analysis Assistant
+│   ├── qualityAssistant.py    # Quality Assistant (placeholder)
+│   ├── complaintAssistant.py  # Complaint Assistant (placeholder)
+│   └── auth_utils.py          # Authentication utilities
+├── n8n/                       # n8n workflow configurations
+│   └── cad_analysis_workflow_backup.json
+├── docker/                    # Docker configurations
+│   ├── django/               # Django Dockerfiles
+│   ├── nginx/                # Nginx configuration
+│   ├── postgres/             # PostgreSQL setup
+│   └── streamlit/            # Streamlit Dockerfiles
+├── scripts/                   # Utility scripts
+│   ├── dev-start.sh          # Development startup
+│   ├── prod-start.sh         # Production startup
+│   └── setup-production.sh   # Production setup
+├── docker-compose.yml         # Development Docker Compose
+├── docker-compose.prod.yml    # Production Docker Compose
+├── requirements.txt           # Python dependencies
+├── env_template.txt           # Environment variables template
+└── README.md                 # This file
+```
+
+## 🔌 API Endpoints
+
+### Authentication Endpoints
+```
+POST   /api/token/           # Obtain JWT token
+POST   /api/token/refresh/   # Refresh JWT token
+POST   /api/token/verify/    # Verify JWT token
+```
+
+### Core Endpoints
+```
+GET    /api/                 # API root with documentation
+GET    /api/preferences/     # User preferences
+PUT    /api/preferences/     # Update user preferences
+GET    /api/dashboard/stats/ # Dashboard statistics
+GET    /api/health/          # Health check
+GET    /api/logs/            # Processing logs
+```
+
+### CAD Assistant Endpoints
+```
+POST   /api/cad/uploads/           # Upload CAD file
+GET    /api/cad/uploads/           # List CAD uploads
+GET    /api/cad/uploads/<id>/      # Get upload details
+DELETE /api/cad/uploads/<id>/      # Delete upload
+GET    /api/cad/results/           # List analysis results
+GET    /api/cad/results/<id>/      # Get specific results
+GET    /api/cad/options/<id>/      # Get analysis options
+PUT    /api/cad/options/<id>/      # Update analysis options
+POST   /api/cad/webhook/n8n-callback/ # n8n webhook callback
+```
+
+### Quality Assistant Endpoints (Future)
+```
+POST   /api/quality/uploads/       # Upload quality data
+GET    /api/quality/results/       # Get quality analysis
+```
+
+### Complaint Assistant Endpoints (Future)
+```
+POST   /api/complaint/analyze/     # Analyze complaint
+GET    /api/complaint/history/     # Get complaint history
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+```bash
 # Required
 SECRET_KEY=your-django-secret-key
 GOOGLE_GEMINI_API_KEY=your-gemini-api-key
 N8N_WEBHOOK_SECRET=your-webhook-secret
 
-# Optional (for Azure AD)
+# Database
+DATABASE_URL=postgresql://cad_user:cad_password@localhost:5433/meiyume_ai_assistant_dev
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=meiyume_ai_assistant_dev
+DB_USER=cad_user
+DB_PASSWORD=cad_password
+DB_HOST=localhost
+DB_PORT=5433
+
+# Azure AD (Optional)
 AZURE_AD_CLIENT_ID=your-azure-ad-client-id
 AZURE_AD_CLIENT_SECRET=your-azure-ad-client-secret
 AZURE_AD_TENANT_ID=your-azure-ad-tenant-id
+
+# n8n Configuration
+N8N_WEBHOOK_URL=https://meiyume.app.n8n.cloud/webhook/fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e
+N8N_FORM_URL=https://meiyume.app.n8n.cloud/form/cb9d8f80-4e72-4abb-acdf-80abad36abe2
+
+# Redis (for Celery)
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
 ```
 
-### 3. Database Setup
-
-```bash
-cd backend
-
-# Run migrations
-python manage.py makemigrations
-python manage.py migrate
-
-# Create superuser
-python manage.py createsuperuser
+### JWT Configuration
+```python
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
 ```
 
-### 4. n8n Setup
+## 🎯 Current AI Assistants
 
-Install and configure n8n:
+### 1. CAD Analysis Assistant ✅
+- **Purpose**: Analyze 2D CAD PDF drawings
+- **AI Model**: Google Gemini 2.5 Flash
+- **Features**:
+  - Dimension extraction and validation
+  - Tolerance analysis
+  - Part relationship mapping
+  - Material specification detection
+  - Assembly component identification
+  - CSV report generation
+  - Engineering visualization
 
-```bash
-# Install n8n globally
-npm install -g n8n
+### 2. Quality Assistant 🚧 (Coming Soon)
+- **Purpose**: Quality control and inspection analysis
+- **Features**:
+  - Defect detection and classification
+  - Quality metrics calculation
+  - Compliance checking
+  - Statistical process control
+  - Automated reporting
 
-# Start n8n (first time - creates config)
-n8n start
+### 3. Complaint Assistant 🚧 (Coming Soon)
+- **Purpose**: Customer complaint analysis
+- **Features**:
+  - Sentiment analysis
+  - Priority assessment
+  - Root cause analysis
+  - Automated response suggestions
+  - Trend analysis
 
-# Stop n8n and import workflows
-# Import cad_analysis_workflow.json for CAD analysis
-```
+## 🔄 Data Flow
 
-### 5. Start Development Environment
+### CAD Analysis Flow
+1. **Upload**: User uploads PDF via Streamlit
+2. **Validation**: Django validates file and creates record
+3. **Processing**: Django sends to n8n webhook
+4. **AI Analysis**: n8n calls Google Gemini API
+5. **Results**: n8n sends structured data back to Django
+6. **Storage**: Django stores results and generates files
+7. **Display**: Streamlit shows results to user
 
-```bash
-# Using Docker Compose (recommended)
-docker-compose up -d
+### Authentication Flow
+1. **Login**: User authenticates via Azure AD or JWT
+2. **Token**: System issues JWT access and refresh tokens
+3. **API Calls**: Frontend includes Bearer token in requests
+4. **Validation**: Django validates token for each request
+5. **Refresh**: Tokens automatically refreshed when needed
 
-# Or start services individually
-cd backend && python manage.py runserver
-cd streamlit_app && streamlit run main.py
-```
+## 🛠️ Development Workflow
 
-## Access Points
-
-- **Main Application**: http://localhost:8501
-- **Django Admin**: http://localhost:8000/admin
-- **API Documentation**: http://localhost:8000/api/
-- **n8n Workflows**: http://localhost:5678
-
-## Adding New AI Assistants
-
-The platform is designed to easily accommodate new AI assistants:
-
-1. **Create Assistant Module**: Add new directory under `backend/assistants/`
-2. **Define Models**: Create models for the assistant's data
+### Adding New Assistant
+1. **Create Module**: `backend/assistants/new_assistant/`
+2. **Define Models**: Inherit from base models
 3. **Create Views**: Implement API endpoints
-4. **Add n8n Workflow**: Create workflow for the assistant
-5. **Update Frontend**: Add interface in Streamlit app
-6. **Configure URLs**: Add routing for the new assistant
+4. **Add Serializers**: Handle data serialization
+5. **Configure URLs**: Add routing
+6. **Create n8n Workflow**: Design AI processing
+7. **Add Frontend**: Create Streamlit interface
+8. **Update Admin**: Configure admin interface
+9. **Test**: Verify functionality
+10. **Deploy**: Apply to production
 
-## Contributing
+### Database Migrations
+```bash
+# Create migrations for new models
+./run_django.sh makemigrations assistants.new_assistant
+
+# Apply migrations
+./run_django.sh migrate
+
+# Check migration status
+./run_django.sh showmigrations
+```
+
+## 🚀 Deployment
+
+### Development
+```bash
+# Start development environment
+./scripts/dev-start.sh
+
+# Access points
+# Frontend: http://localhost:8501
+# Backend: http://localhost:8000
+# Admin: http://localhost:8000/admin
+# n8n: http://localhost:5678
+```
+
+### Production
+```bash
+# Setup production environment
+./scripts/setup-production.sh
+
+# Start production services
+./scripts/prod-start.sh
+
+# Access points
+# Main App: https://your-domain.com
+# Admin: https://your-domain.com/admin
+# n8n: https://your-domain.com/n8n
+```
+
+## 🔍 Monitoring & Debugging
+
+### Logs
+```bash
+# Django logs
+docker-compose logs -f django
+
+# Streamlit logs
+docker-compose logs -f streamlit
+
+# n8n logs
+docker-compose logs -f n8n
+
+# Database logs
+docker-compose logs -f db
+```
+
+### Health Checks
+```bash
+# API health
+curl http://localhost:8000/api/health/
+
+# Database connection
+./run_django.sh dbshell
+
+# Redis connection
+docker-compose exec redis redis-cli ping
+```
+
+### Common Issues
+- **Database Connection**: Check PostgreSQL is running and credentials are correct
+- **JWT Issues**: Verify token expiration and signing key
+- **File Uploads**: Check file size limits and media directory permissions
+- **n8n Integration**: Verify webhook URLs and secrets
+
+## 📚 API Documentation
+
+### Authentication
+All API endpoints require authentication via JWT Bearer token:
+```bash
+curl -H "Authorization: Bearer <your-jwt-token>" \
+     http://localhost:8000/api/cad/uploads/
+```
+
+### File Upload Example
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <your-jwt-token>" \
+  -F "file=@drawing.pdf" \
+  -F "project_name=Project Alpha" \
+  -F "drawing_number=DWG-001" \
+  http://localhost:8000/api/cad/uploads/
+```
+
+### Get Results Example
+```bash
+curl -H "Authorization: Bearer <your-jwt-token>" \
+     http://localhost:8000/api/cad/results/<upload-id>/
+```
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -204,6 +451,14 @@ The platform is designed to easily accommodate new AI assistants:
 4. Add tests
 5. Submit a pull request
 
-## License
+## 📄 License
 
-This project is proprietary software. All rights reserved. 
+This project is proprietary software. All rights reserved.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Check the troubleshooting section
+- Review the API documentation
+- Contact the development team 

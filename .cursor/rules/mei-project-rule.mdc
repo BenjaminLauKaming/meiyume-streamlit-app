@@ -40,6 +40,10 @@ rules:
       Django is integrated with Microsoft Azure Active Directory. All users log in using 
       their company Microsoft credentials via OAuth2 (Azure AD SSO).
   - description: >
+      The system uses JWT (JSON Web Token) authentication for all API endpoints. JWT tokens are issued at /api/token/ and must be included as Bearer tokens in the Authorization header for all protected endpoints. Token refresh and verification endpoints are provided at /api/token/refresh/ and /api/token/verify/.
+  - description: >
+      JWT settings: 24h access token, 7d refresh token, rotation and blacklisting enabled, HS256 algorithm, secret key from environment. All API endpoints require authentication unless explicitly marked as public.
+  - description: >
       The system is designed for easy extensibility. Adding a new assistant requires:
       1. Creating a new assistant module under backend/assistants/
       2. Defining assistant-specific models, views, and serializers
