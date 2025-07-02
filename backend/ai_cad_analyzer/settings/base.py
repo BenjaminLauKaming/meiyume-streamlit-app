@@ -25,6 +25,8 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "storages",
 ]
@@ -71,7 +73,7 @@ WSGI_APPLICATION = "ai_cad_analyzer.wsgi.application"
 
 # Use DATABASE_URL if available, otherwise fall back to individual settings
 DATABASE_URL = config('DATABASE_URL', default=None)
-if DATABASE_URL:
+if DATABASE_URL and isinstance(DATABASE_URL, str):
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL)
     }
@@ -131,7 +133,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -148,6 +150,24 @@ REST_FRAMEWORK = {
     ],
 }
 
+# JWT Settings
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+}
+
 # File Upload Settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
@@ -158,9 +178,9 @@ AZURE_AD_CLIENT_SECRET = config('AZURE_AD_CLIENT_SECRET', default='')
 AZURE_AD_TENANT_ID = config('AZURE_AD_TENANT_ID', default='')
 
 # n8n Settings
-N8N_WEBHOOK_URL = config('N8N_WEBHOOK_URL', default='http://localhost:5678/webhook/cad-analysis')
+N8N_WEBHOOK_URL = config('N8N_WEBHOOK_URL', default='https://meiyume.app.n8n.cloud/webhook/fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e')
 N8N_WEBHOOK_SECRET = config('N8N_WEBHOOK_SECRET', default='your-webhook-secret')
-N8N_FORM_URL = config('N8N_FORM_URL', default='http://localhost:5678/form/ffc0c29a-e891-4521-b822-e0d1ac468a19')
+N8N_FORM_URL = config('N8N_FORM_URL', default='https://meiyume.app.n8n.cloud/form/cb9d8f80-4e72-4abb-acdf-80abad36abe2')
 
 # Google Gemini Settings
 GOOGLE_GEMINI_API_KEY = config('GOOGLE_GEMINI_API_KEY', default='')

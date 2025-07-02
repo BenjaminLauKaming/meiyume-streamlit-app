@@ -1,41 +1,10 @@
 {
-  "name": "CAD Analysis Workflow",
+  "name": "My workflow 5",
   "nodes": [
     {
       "parameters": {
-        "formTitle": "MyFormUpload",
-        "formDescription": "Upload a CAD PDF",
-        "formFields": {
-          "values": [
-            {
-              "fieldLabel": "=pdfFile",
-              "fieldType": "=file",
-              "fieldOptions": {
-                "values": [
-                  {}
-                ]
-              },
-              "multipleFiles": false,
-              "requiredField": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.formTrigger",
-      "typeVersion": 2.2,
-      "position": [
-        0,
-        0
-      ],
-      "id": "18449f89-2b13-430e-9040-05f557aa0230",
-      "name": "On form submission",
-      "webhookId": "ffc0c29a-e891-4521-b822-e0d1ac468a19"
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/upload/v1beta/files?key=key",
+        "url": "https://generativelanguage.googleapis.com/upload/v1beta/files?key=AIzaSyDUkuq2Lpa2UPOQqukxSm2A6HHCVQCvNxA",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpQueryAuth",
         "sendHeaders": true,
@@ -49,9 +18,23 @@
               "name": "X-Goog-Upload-Command",
               "value": "start"
             },
-            {}
+            {
+              "name": "=X-Goog-Upload-Header-Content-Type",
+              "value": "={{ $json.pdfFile.mimetype }}"
+            },
+            {
+              "name": "X-Goog-Upload-Header-Content-Length",
+              "value": "={{ $json.pdfFile.size }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"file\": {\n    \"display_name\": \"{{ $json.pdfFile.filename }}\"\n  }\n}\n",
         "options": {
           "response": {
             "response": {
@@ -64,10 +47,11 @@
       "typeVersion": 4.2,
       "position": [
         220,
-        0
+        100
       ],
-      "id": "724bc6cf-a377-4ef7-be90-7035fcf037dd",
+      "id": "ccc90260-c6c7-48c5-9554-448df8705c6f",
       "name": "Call Gemini",
+      "alwaysOutputData": false,
       "credentials": {
         "httpQueryAuth": {
           "id": "nQnQscghmTTAAPMR",
@@ -77,30 +61,17 @@
     },
     {
       "parameters": {
-        "jsCode": "return{\n  json : {},\n  binary: $('On form submission').item.binary\n}"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        440,
-        0
-      ],
-      "id": "553983dc-c354-464e-9ec8-71214b411dc2",
-      "name": "Code"
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "={{ $('Call Gemini').item.json.headers['x-goog-upload-url'] }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "X-Goog-Upload-offset",
+              "name": "X-Goog-Upload-Offset",
               "value": "0"
             },
             {
-              "name": "X-goog-Upload-Command",
+              "name": "X-Goog-Upload-Command",
               "value": "upload, finalize"
             },
             {
@@ -117,16 +88,29 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        620,
-        0
+        660,
+        100
       ],
-      "id": "66ba4e5a-13a0-4b9d-a1ad-4e14989b053c",
-      "name": "Update Pdf Data"
+      "id": "8fe94ace-09eb-40d0-9971-db8380ce5e73",
+      "name": "Upload Pdf Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {},\n  binary: $('On form submission').item.binary\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        100
+      ],
+      "id": "1cfd7cc5-0e07-4374-bab5-0b038a207522",
+      "name": "Code1"
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=key",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=AIzaSyDUkuq2Lpa2UPOQqukxSm2A6HHCVQCvNxA",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpQueryAuth",
         "sendBody": true,
@@ -137,10 +121,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        840,
-        0
+        880,
+        100
       ],
-      "id": "abfa2a33-6185-4cf9-96f5-537d16530262",
+      "id": "0fbe2e0c-a10e-47c7-8915-356a2bcf869e",
       "name": "HTTP Request",
       "credentials": {
         "httpQueryAuth": {
@@ -151,79 +135,83 @@
     },
     {
       "parameters": {
-        "language": "python",
-        "pythonCode": "import json\n\ninput_data = items[0]['json']\ntext_content_string = input_data['candidates'][0]['content']['parts'][0]['text']\nparsed_text_content = json.loads(text_content_string) # Corrected variable name\noutput_items = []\n\nfor part in parsed_text_content['parts']:\n    part_name = part['part_name']\n    for dimension in part['dimensions']:\n        output_items.append({\n            'part_name': part_name,\n            'dimension_type': dimension['dimension_type'],\n            'feature': dimension['feature'],\n            'is_critical_dimension': dimension['is_critical_dimension'],\n            'type': dimension['type'],\n            'unit': dimension['unit'],\n            'value': dimension['value'],\n            'tolerance': dimension['tolerance']\n        })\nreturn output_items"
+        "httpMethod": "POST",
+        "path": "fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e",
+        "options": {}
       },
-      "type": "n8n-nodes-base.code",
+      "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        1080,
-        0
+        0,
+        200
       ],
-      "id": "8ea9d6d8-76e5-4af1-be3b-d4a1468b02fd",
-      "name": "Code1"
+      "id": "780ea12e-2f3d-4f4a-a5e8-a3d4ea37f6d5",
+      "name": "Webhook",
+      "webhookId": "fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e"
     },
     {
       "parameters": {
+        "formTitle": "MyFormUpload",
+        "formDescription": "Upload a CAD PDF",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "=pdfFile",
+              "fieldType": "=file",
+              "fieldOptions": {
+                "values": [
+                  {}
+                ]
+              },
+              "multipleFiles": false,
+              "acceptFileTypes": "=.pdf",
+              "requiredField": true
+            }
+          ]
+        },
         "options": {}
       },
-      "type": "n8n-nodes-base.convertToFile",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
       "position": [
-        1300,
+        0,
         0
       ],
-      "id": "32212b89-9e34-4447-bd10-66a7d5ceaf1a",
-      "name": "Convert to File"
+      "id": "9720acd8-f1cb-470e-ae2a-37635c217fb1",
+      "name": "On form submission",
+      "webhookId": "cb9d8f80-4e72-4abb-acdf-80abad36abe2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://django:8000/api/webhook/n8n-callback/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"execution_id\": $execution.id,\n  \"status\": \"completed\",\n  \"upload_id\": $('On form submission').item.json.upload_id || $('Webhook').item.json.upload_id,\n  \"results\": {\n    \"dimensions\": $json,\n    \"contact_pairs\": $('HTTP Request').item.json.contact_pairs || [],\n    \"parts\": $('HTTP Request').item.json.parts || []\n  },\n  \"progress\": 100,\n  \"webhook_secret\": $env.N8N_WEBHOOK_SECRET || 'your-webhook-secret'\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        100
+      ],
+      "id": "f13442f4-ddba-4427-b42c-30691dccaec7",
+      "name": "HTTP Request1"
     }
   ],
   "pinData": {},
   "connections": {
-    "On form submission": {
-      "main": [
-        [
-          {
-            "node": "Call Gemini",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Call Gemini": {
-      "main": [
-        [
-          {
-            "node": "Code",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code": {
-      "main": [
-        [
-          {
-            "node": "Update Pdf Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update Pdf Data": {
-      "main": [
-        [
-          {
-            "node": "HTTP Request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP Request": {
       "main": [
         [
           {
@@ -234,11 +222,55 @@
         ]
       ]
     },
+    "Upload Pdf Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Code1": {
       "main": [
         [
           {
-            "node": "Convert to File",
+            "node": "Upload Pdf Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Call Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Call Gemini",
             "type": "main",
             "index": 0
           }
@@ -246,14 +278,14 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4cd005fa-c05a-4f18-8de0-4d77e4dbc802",
+  "versionId": "f4c3a71f-1b3f-4b0f-b6c0-b8b2e933f3d4",
   "meta": {
     "instanceId": "3832e20401d3214f5d28cb87829840daca96b21efa6b33978faa76de36a95782"
   },
-  "id": "ODSyACKHkNR1EzVV",
+  "id": "rbOQDFJyX4ZmdY1T",
   "tags": []
 }

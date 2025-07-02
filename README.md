@@ -1,44 +1,75 @@
-# AI CAD Analyzer
+# Meiyume AI Assistant
 
-A full-stack application for analyzing 2D CAD PDF drawings using AI. The system extracts dimensions, tolerances, and part relationships from engineering drawings using Google Gemini AI, orchestrated through an n8n workflow.
+A comprehensive full-stack application for multiple AI-powered assistants. The system currently supports CAD analysis and is designed to easily accommodate additional AI assistants through a modular architecture.
 
 ## Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Streamlit     │    │     Django      │    │      n8n        │
-│   Frontend      │◄──►│    Backend      │◄──►│   Workflow      │
+│   Frontend      │◄──►│    Backend      │◄──►│   Workflows     │
 │                 │    │   REST API      │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                               │                         │
                               │                         │
                        ┌─────────────┐         ┌─────────────┐
-                       │ PostgreSQL  │         │   Google    │
-                       │  Database   │         │   Gemini    │
+                       │ PostgreSQL  │         │   Multiple  │
+                       │  Database   │         │   AI Models │
                        └─────────────┘         └─────────────┘
 ```
+
+## Current AI Assistants
+
+### 1. CAD Analysis Assistant
+- Analyzes 2D CAD PDF drawings using Google Gemini AI
+- Extracts dimensions, tolerances, and part relationships
+- Generates structured CSV reports and analysis documents
+
+### 2. Quality Assistant (Coming Soon)
+- Quality control and inspection analysis
+- Defect detection and classification
+- Quality metrics and reporting
+
+### 3. Complaint Assistant (Coming Soon)
+- Customer complaint analysis and categorization
+- Sentiment analysis and priority assessment
+- Automated response suggestions
 
 ## Project Structure
 
 ```
-ai-cad-analyzer/
+meiyume_ai_assistant/
 ├── streamlit_app/         # Streamlit UI code
-│   └── main.py
+│   ├── main.py           # Main application entry point
+│   ├── cadAssistant.py   # CAD analysis interface
+│   ├── qualityAssistant.py # Quality analysis interface
+│   ├── complaintAssistant.py # Complaint analysis interface
+│   └── auth_utils.py     # Authentication utilities
 ├── backend/               # Django project
 │   ├── manage.py
-│   ├── cad_core/          # Django app for uploads, models, API
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   ├── admin.py
-│   │   └── utils.py
-│   └── ai_cad_analyzer/   # Django settings, urls, etc.
+│   ├── meiyume_core/     # Core Django app for shared functionality
+│   │   ├── models.py     # Base models and shared functionality
+│   │   ├── views.py      # Shared API views
+│   │   ├── serializers.py # Shared serializers
+│   │   ├── urls.py       # Core URL patterns
+│   │   ├── admin.py      # Admin interface
+│   │   └── utils.py      # Shared utilities
+│   ├── assistants/       # Individual assistant modules
+│   │   ├── cad/          # CAD analysis assistant
+│   │   │   ├── models.py
+│   │   │   ├── views.py
+│   │   │   ├── serializers.py
+│   │   │   └── workflows.py
+│   │   ├── quality/      # Quality assistant (future)
+│   │   └── complaint/    # Complaint assistant (future)
+│   └── meiyume_ai_assistant/ # Django settings, urls, etc.
 │       ├── settings.py
 │       ├── urls.py
 │       └── wsgi.py
-├── n8n/                   # n8n workflow JSON export, docs
-│   └── cad_analysis_workflow.json
+├── n8n/                   # n8n workflow configurations
+│   ├── cad_analysis_workflow.json
+│   ├── quality_analysis_workflow.json (future)
+│   └── complaint_analysis_workflow.json (future)
 ├── requirements.txt       # Python dependencies
 ├── env_template.txt       # Environment variables template
 └── README.md             # This file
@@ -46,16 +77,22 @@ ai-cad-analyzer/
 
 ## Features
 
+### Core Platform Features
+- **Modular Architecture**: Easy to add new AI assistants
+- **Unified Authentication**: Azure AD integration with SSO
+- **Multi-Assistant Support**: Switch between different AI assistants
+- **Real-time Processing**: Live status updates via webhooks
+- **Results Export**: CSV and report downloads for all assistants
+- **Admin Interface**: Django admin for system management
+
+### CAD Analysis Features
 - **File Upload**: Secure PDF upload with validation
 - **AI Analysis**: Google Gemini-powered extraction of:
   - Dimensions and measurements
   - Tolerance specifications
   - Part relationships and assembly info
   - Material specifications
-- **Real-time Processing**: Live status updates via webhooks
-- **Results Export**: CSV and report downloads
-- **User Management**: Azure AD integration with SSO
-- **Admin Interface**: Django admin for system management
+- **Engineering Reports**: Detailed analysis with visualizations
 
 ## Setup Instructions
 
@@ -70,7 +107,7 @@ ai-cad-analyzer/
 
 ```bash
 git clone <repository-url>
-cd ai-cad-analyzer
+cd meiyume_ai_assistant
 
 # Create virtual environment
 python -m venv venv
@@ -126,234 +163,47 @@ npm install -g n8n
 # Start n8n (first time - creates config)
 n8n start
 
-# Stop n8n and import workflow
-# Go to http://localhost:5678
-# Import the workflow from n8n/cad_analysis_workflow.json
+# Stop n8n and import workflows
+# Import cad_analysis_workflow.json for CAD analysis
 ```
 
-Configure n8n:
-1. Set up Google Gemini credentials
-2. Set webhook secret environment variable
-3. Activate the workflow
-
-### 5. Running the Application
-
-Start all services:
+### 5. Start Development Environment
 
 ```bash
-# Terminal 1: Django Backend
-cd backend
-python manage.py runserver
+# Using Docker Compose (recommended)
+docker-compose up -d
 
-# Terminal 2: Streamlit Frontend  
-streamlit run streamlit_app/main.py
-
-# Terminal 3: n8n (if not running as service)
-n8n start
+# Or start services individually
+cd backend && python manage.py runserver
+cd streamlit_app && streamlit run main.py
 ```
 
-Access the application:
-- **Streamlit UI**: http://localhost:8501
-- **Django API**: http://localhost:8000
+## Access Points
+
+- **Main Application**: http://localhost:8501
 - **Django Admin**: http://localhost:8000/admin
-- **n8n Interface**: http://localhost:5678
+- **API Documentation**: http://localhost:8000/api/
+- **n8n Workflows**: http://localhost:5678
 
-## API Endpoints
+## Adding New AI Assistants
 
-### File Upload
-```
-POST /api/uploads/
-Content-Type: multipart/form-data
+The platform is designed to easily accommodate new AI assistants:
 
-{
-  "file": <PDF file>,
-  "metadata": "{\"project_name\": \"Example Project\"}",
-  "analysis_options": {
-    "extract_dimensions": true,
-    "extract_tolerances": true,
-    "analyze_part_relationships": true
-  }
-}
-```
-
-### Check Processing Status
-```
-GET /api/results/{task_id}/
-
-Response:
-{
-  "task_id": "uuid",
-  "status": "completed|processing|failed",
-  "progress": 100,
-  "results": {
-    "dimensions": [...],
-    "tolerances": [...],
-    "relationships": [...]
-  },
-  "download_urls": {
-    "dimensions_csv": "url",
-    "tolerances_csv": "url"
-  }
-}
-```
-
-### Dashboard Stats
-```
-GET /api/dashboard/stats/
-
-Response:
-{
-  "total_uploads": 25,
-  "completed_uploads": 20,
-  "failed_uploads": 2,
-  "processing_uploads": 3,
-  "recent_uploads": [...]
-}
-```
-
-## Data Flow
-
-1. **Upload**: User uploads PDF via Streamlit
-2. **Storage**: Django saves file and creates database record
-3. **Webhook**: Django sends file URL and metadata to n8n
-4. **Processing**: n8n downloads PDF, extracts text, sends to Gemini
-5. **Analysis**: Gemini analyzes content and returns structured data
-6. **Callback**: n8n sends results back to Django webhook
-7. **Storage**: Django stores results and generates CSV files
-8. **Display**: Streamlit polls for status and displays results
-
-## Security Features
-
-- **Authentication**: Token-based auth with Azure AD integration
-- **File Validation**: PDF-only uploads with size limits
-- **Webhook Security**: Secret-based validation for n8n callbacks
-- **CORS Protection**: Configured for specific origins
-- **Input Sanitization**: All inputs validated and sanitized
-
-## Production Deployment
-
-### Environment Variables for Production
-
-```env
-DEBUG=False
-ALLOWED_HOSTS=your-domain.com
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=cad_analyzer_db
-DB_USER=db_user
-DB_PASSWORD=secure_password
-DB_HOST=db_host
-SITE_DOMAIN=https://your-domain.com
-```
-
-### Database Migration
-
-```bash
-# PostgreSQL setup
-pip install psycopg2-binary
-python manage.py migrate
-
-# Collect static files
-python manage.py collectstatic
-```
-
-### Docker Deployment (Optional)
-
-Create `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-services:
-  django:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/dbname
-    depends_on:
-      - db
-      - redis
-
-  streamlit:
-    build: .
-    command: streamlit run streamlit_app/main.py
-    ports:
-      - "8501:8501"
-    depends_on:
-      - django
-
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: cad_analyzer
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-
-  redis:
-    image: redis:6
-    
-  n8n:
-    image: n8nio/n8n
-    ports:
-      - "5678:5678"
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=password
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **n8n Webhook Not Responding**
-   - Check n8n is running on port 5678
-   - Verify webhook URL in Django settings
-   - Check webhook secret matches
-
-2. **File Upload Fails**
-   - Verify file is PDF format
-   - Check file size (10MB limit)
-   - Ensure Django media directory exists
-
-3. **Gemini API Errors**
-   - Verify API key is correct
-   - Check rate limits
-   - Ensure n8n has Gemini credentials configured
-
-4. **Database Connection Issues**
-   - Check database credentials
-   - Verify PostgreSQL is running
-   - Run migrations if needed
-
-### Logs
-
-Check application logs:
-
-```bash
-# Django logs
-tail -f backend/logs/django.log
-
-# n8n logs
-# Available in n8n interface under executions
-
-# Streamlit logs
-# Visible in terminal running streamlit
-```
+1. **Create Assistant Module**: Add new directory under `backend/assistants/`
+2. **Define Models**: Create models for the assistant's data
+3. **Create Views**: Implement API endpoints
+4. **Add n8n Workflow**: Create workflow for the assistant
+5. **Update Frontend**: Add interface in Streamlit app
+6. **Configure URLs**: Add routing for the new assistant
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make changes and add tests
-4. Submit a pull request
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ## License
 
-[Add your license information here]
-
-## Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the documentation
-- Review the troubleshooting section 
+This project is proprietary software. All rights reserved. 

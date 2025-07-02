@@ -8,7 +8,8 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 import requests
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 class CADUploadViewSet(viewsets.ModelViewSet):
     """ViewSet for managing CAD file uploads"""
     
-    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
     
@@ -61,9 +62,9 @@ class CADUploadViewSet(viewsets.ModelViewSet):
             step='file_upload'
         )
         
-        # Send to n8n form
+        # Send to n8n webhook
         try:
-            success = send_to_n8n_form(cad_upload)
+            success = send_to_n8n_webhook(cad_upload)
             if success:
                 cad_upload.status = 'processing'
                 cad_upload.processing_started_at = timezone.now()
@@ -72,7 +73,7 @@ class CADUploadViewSet(viewsets.ModelViewSet):
                 ProcessingLog.objects.create(
                     upload=cad_upload,
                     level='info',
-                    message="Successfully sent to n8n for processing",
+                    message="Successfully sent to n8n webhook for processing",
                     step='webhook_trigger'
                 )
             else:
@@ -153,9 +154,9 @@ class CADUploadViewSet(viewsets.ModelViewSet):
         cad_upload.retry_count += 1
         cad_upload.save()
         
-        # Send to n8n again
+        # Send to n8n webhook again
         try:
-            success = send_to_n8n_form(cad_upload)
+            success = send_to_n8n_webhook(cad_upload)
             if success:
                 cad_upload.status = 'processing'
                 cad_upload.processing_started_at = timezone.now()
@@ -232,7 +233,22 @@ def n8n_webhook_callback(request):
         )
     
     data = serializer.validated_data
-    upload_id = data['upload_id']
+    upload_id = data.get('upload_id')
+    
+    # If no upload_id provided, just log the results and return success
+    if not upload_id:
+        logger.info(f"Received n8n callback without upload_id: {data['status']}")
+        logger.info(f"Results: {data.get('results', {})}")
+        
+        # Log the callback without upload reference
+        ProcessingLog.objects.create(
+            level='info' if data['status'] != 'failed' else 'error',
+            message=f"Received n8n callback without upload_id: {data['status']}",
+            step='webhook_callback',
+            metadata=data
+        )
+        
+        return Response({'status': 'success', 'message': 'Results logged without upload reference'})
     
     try:
         cad_upload = CADUpload.objects.get(id=upload_id)
@@ -281,7 +297,7 @@ def n8n_webhook_callback(request):
 class UserPreferencesViewSet(viewsets.ModelViewSet):
     """ViewSet for managing user preferences"""
     
-    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = UserPreferencesSerializer
     
@@ -365,3 +381,65 @@ def health_check(request):
         'timestamp': timezone.now().isoformat(),
         'version': '1.0.0'
     })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def debug_auth_config(request):
+    """Debug endpoint to check authentication configuration"""
+    from django.conf import settings
+    
+    auth_classes = settings.REST_FRAMEWORK.get('DEFAULT_AUTHENTICATION_CLASSES', [])
+    
+    return Response({
+        'authentication_classes': auth_classes,
+        'jwt_installed': 'rest_framework_simplejwt' in settings.INSTALLED_APPS,
+        'request_auth': str(request.auth) if request.auth else None,
+        'request_user': str(request.user) if request.user else None,
+    })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_latest_results(request):
+    """Get the latest webhook results from n8n"""
+    try:
+        # Get the most recent webhook log
+        latest_log = ProcessingLog.objects.filter(
+            step='webhook_callback',
+            level='info'
+        ).order_by('-created_at').first()
+        
+        if not latest_log:
+            return Response(
+                {'error': 'No webhook results found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Extract and format the results
+        metadata = latest_log.metadata or {}
+        results = metadata.get('results', {})
+        
+        # Parse the dimensions data if it's a string
+        dimensions_data = results.get('dimensions', {})
+        if isinstance(dimensions_data, str):
+            import json
+            try:
+                dimensions_data = json.loads(dimensions_data)
+            except json.JSONDecodeError:
+                dimensions_data = {}
+        
+        formatted_results = {
+            'timestamp': latest_log.created_at.isoformat(),
+            'status': metadata.get('status'),
+            'execution_id': metadata.get('execution_id'),
+            'parts': dimensions_data.get('parts', []),
+            'contact_pairs': dimensions_data.get('contact_pairs', [])
+        }
+        
+        return Response(formatted_results)
+        
+    except Exception as e:
+        logger.error(f"Error retrieving latest results: {str(e)}")
+        return Response(
+            {'error': 'Internal server error'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

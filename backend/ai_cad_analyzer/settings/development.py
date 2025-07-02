@@ -5,9 +5,9 @@ Development settings for ai_cad_analyzer project.
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', '0.0.0.0', 'django']
 
 # Development-specific apps
 INSTALLED_APPS += [
@@ -99,3 +99,7 @@ INTERNAL_IPS = ['127.0.0.1', 'localhost']
 # Disable some security in development
 SECURE_SSL_REDIRECT = False
 SECURE_HSTS_SECONDS = 0 
+
+# Use n8n Cloud URLs (or environment variables if set)
+N8N_WEBHOOK_URL = config('N8N_WEBHOOK_URL', default='https://meiyume.app.n8n.cloud/webhook/fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e')
+N8N_FORM_URL = config('N8N_FORM_URL', default='https://meiyume.app.n8n.cloud/form/cb9d8f80-4e72-4abb-acdf-80abad36abe2')

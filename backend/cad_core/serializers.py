@@ -183,7 +183,7 @@ class N8NWebhookResponseSerializer(serializers.Serializer):
     """Serializer for n8n webhook response handling"""
     execution_id = serializers.CharField()
     status = serializers.CharField()
-    upload_id = serializers.UUIDField()
+    upload_id = serializers.UUIDField(required=False, allow_null=True)
     results = serializers.JSONField(required=False)
     error_message = serializers.CharField(required=False)
     progress = serializers.IntegerField(required=False) 

@@ -15,7 +15,11 @@ urlpatterns = [
     path('results/<uuid:task_id>/', views.get_processing_status, name='processing-status'),
     path('dashboard/stats/', views.dashboard_stats, name='dashboard-stats'),
     path('health/', views.health_check, name='health-check'),
+    path('latest-results/', views.get_latest_results, name='latest-results'),
     
     # n8n webhook callback (no authentication required)
     path('webhook/n8n-callback/', views.n8n_webhook_callback, name='n8n-webhook-callback'),
+    
+    # Debug endpoint for authentication
+    path('debug/auth/', views.debug_auth_config, name='debug-auth'),
 ] 

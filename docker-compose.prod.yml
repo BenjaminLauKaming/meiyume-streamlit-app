@@ -72,7 +72,7 @@ services:
 
   # n8n Workflow Engine - Production
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.19.4
     container_name: cad_analyzer_n8n_prod
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
@@ -83,6 +83,9 @@ services:
       - N8N_SECURE_COOKIE=true
       - N8N_PROTOCOL=https
       - N8N_HOST=${N8N_HOST}
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - N8N_BINARY_DATA_TTL=24
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
     volumes:
       - n8n_data_prod:/home/node/.n8n
     networks:

@@ -13,7 +13,7 @@ ENVIRONMENT=development
 SECRET_KEY=your-secret-key-here-generate-a-new-one
 DEBUG=True
 DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.development
-ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,django
 
 # ===========================================
 # DATABASE CONFIGURATION

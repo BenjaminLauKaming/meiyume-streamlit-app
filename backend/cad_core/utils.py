@@ -5,12 +5,94 @@ import os
 from django.conf import settings
 from django.urls import reverse
 from django.core.files.storage import default_storage
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 from .serializers import WebhookPayloadSerializer
 
 logger = logging.getLogger(__name__)
 
+def send_to_n8n_webhook(cad_upload):
+    """Send CAD upload file to n8n webhook trigger for processing"""
+    
+    try:
+        # Get the webhook URL - using your new webhook path
+        webhook_path = "fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e"
+        n8n_webhook_url = getattr(settings, 'N8N_WEBHOOK_URL', f'http://localhost:5678/webhook/{webhook_path}')
+        
+        # Prepare the file for upload
+        if not cad_upload.file_path:
+            logger.error(f"No file path for upload {cad_upload.id}")
+            return False
+        
+        # Open and read the file
+        try:
+            with cad_upload.file_path.open('rb') as file:
+                # Use MultipartEncoder to correctly set Content-Type and Content-Length
+                payload = MultipartEncoder(
+                    fields={
+                        'pdfFile': (cad_upload.original_filename, file, 'application/pdf'),
+                        'upload_id': str(cad_upload.id),
+                        'original_filename': cad_upload.original_filename,
+                        'project_name': cad_upload.project_name or '',
+                        'drawing_number': cad_upload.drawing_number or '',
+                        'revision': cad_upload.revision or '',
+                        'user_id': str(cad_upload.user.id),
+                        'webhook_secret': getattr(settings, 'N8N_WEBHOOK_SECRET', '')
+                    }
+                )
+                
+                # Send to n8n webhook
+                response = requests.post(
+                    n8n_webhook_url,
+                    data=payload,
+                    headers={
+                        'User-Agent': 'Django-CAD-Analyzer/1.0',
+                        'Content-Type': payload.content_type
+                    },
+                    timeout=120  # Increased timeout for file upload and processing
+                )
+                
+                # Check response
+                if response.status_code in [200, 201]:
+                    logger.info(f"Successfully sent upload {cad_upload.id} to n8n webhook")
+                    
+                    # Store webhook response
+                    try:
+                        if response.headers.get('content-type', '').startswith('application/json'):
+                            response_data = response.json()
+                            cad_upload.webhook_response = response_data
+                        else:
+                            cad_upload.webhook_response = {
+                                'status': 'submitted', 
+                                'response_code': response.status_code,
+                                'message': 'File submitted to n8n webhook successfully'
+                            }
+                        cad_upload.save()
+                    except json.JSONDecodeError:
+                        logger.info(f"n8n webhook returned non-JSON response: {response.status_code}")
+                        cad_upload.webhook_response = {
+                            'status': 'submitted', 
+                            'response_code': response.status_code
+                        }
+                        cad_upload.save()
+                    
+                    return True
+                else:
+                    logger.error(f"n8n webhook returned status {response.status_code}: {response.text}")
+                    return False
+                    
+        except Exception as file_error:
+            logger.error(f"Error reading file for upload {cad_upload.id}: {str(file_error)}")
+            return False
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error sending to n8n webhook: {str(e)}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error in send_to_n8n_webhook: {str(e)}")
+        return False
+
 def send_to_n8n_form(cad_upload):
-    """Send CAD upload data to n8n form for processing"""
+    """Send CAD upload data to n8n form for processing - kept for backward compatibility"""
     
     try:
         # For the form-based workflow, we need to submit the file directly to the n8n form
@@ -68,80 +150,6 @@ def send_to_n8n_form(cad_upload):
         return False
     except Exception as e:
         logger.error(f"Unexpected error in send_to_n8n_form: {str(e)}")
-        return False
-
-# Keep the original function as backup
-def send_to_n8n_webhook(cad_upload):
-    """Original webhook function - kept for backward compatibility"""
-    
-    try:
-        # Prepare the payload
-        payload_data = {
-            'upload_id': str(cad_upload.id),
-            'file_url': generate_file_url(cad_upload),
-            'analysis_options': {
-                'extract_dimensions': cad_upload.analysis_options.extract_dimensions,
-                'extract_tolerances': cad_upload.analysis_options.extract_tolerances,
-                'analyze_part_relationships': cad_upload.analysis_options.analyze_part_relationships,
-                'extract_material_specifications': cad_upload.analysis_options.extract_material_specifications,
-                'detect_assembly_components': cad_upload.analysis_options.detect_assembly_components,
-                'ai_model_version': cad_upload.analysis_options.ai_model_version,
-                'confidence_threshold': cad_upload.analysis_options.confidence_threshold,
-                'max_analysis_time': cad_upload.analysis_options.max_analysis_time,
-                'custom_prompt_additions': cad_upload.analysis_options.custom_prompt_additions,
-            },
-            'metadata': {
-                'original_filename': cad_upload.original_filename,
-                'project_name': cad_upload.project_name,
-                'drawing_number': cad_upload.drawing_number,
-                'revision': cad_upload.revision,
-                'notes': cad_upload.notes,
-                'user_id': cad_upload.user.id,
-                'username': cad_upload.user.username,
-                'user_email': cad_upload.user.email,
-            },
-            'webhook_secret': settings.N8N_WEBHOOK_SECRET
-        }
-        
-        # Validate payload with serializer
-        serializer = WebhookPayloadSerializer(data=payload_data)
-        if not serializer.is_valid():
-            logger.error(f"Invalid webhook payload: {serializer.errors}")
-            return False
-        
-        # Send POST request to n8n webhook
-        response = requests.post(
-            settings.N8N_WEBHOOK_URL,
-            json=payload_data,
-            headers={
-                'Content-Type': 'application/json',
-                'User-Agent': 'Django-CAD-Analyzer/1.0'
-            },
-            timeout=30
-        )
-        
-        # Check response
-        if response.status_code == 200:
-            logger.info(f"Successfully sent upload {cad_upload.id} to n8n webhook")
-            
-            # Store webhook response
-            try:
-                response_data = response.json()
-                cad_upload.webhook_response = response_data
-                cad_upload.save()
-            except json.JSONDecodeError:
-                logger.warning(f"n8n webhook returned non-JSON response: {response.text}")
-            
-            return True
-        else:
-            logger.error(f"n8n webhook returned status {response.status_code}: {response.text}")
-            return False
-            
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error sending to n8n webhook: {str(e)}")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected error in send_to_n8n_webhook: {str(e)}")
         return False
 
 def generate_file_url(cad_upload):

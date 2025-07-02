@@ -9,12 +9,13 @@ from pathlib import Path
 # Import assistant modules
 from engAssistant import engineering_assistant
 from qualityAssistant import quality_assistant
+from auth_utils import render_login_form, ensure_authenticated, get_auth_headers
 
 load_dotenv()
 
 # Configuration
 DJANGO_API_URL = os.getenv("DJANGO_API_URL", "http://localhost:8000")
-UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/upload/"
+UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/uploads/"
 RESULTS_ENDPOINT = f"{DJANGO_API_URL}/api/results/"
 
 # Page configuration
@@ -29,8 +30,8 @@ def init_session_state():
     """Initialize session state variables"""
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
-    if 'access_token' not in st.session_state:
-        st.session_state.access_token = None
+    if 'jwt_tokens' not in st.session_state:
+        st.session_state.jwt_tokens = None
     if 'user_info' not in st.session_state:
         st.session_state.user_info = None
     if 'upload_history' not in st.session_state:
@@ -39,27 +40,8 @@ def init_session_state():
         st.session_state.current_page = "Home"
 
 def authenticate_user():
-    """Handle user authentication with Azure AD"""
-    st.title("🔐 Authentication Required")
-    st.info("Please authenticate with your Microsoft/Azure AD credentials to access the CAD Analyzer Hub.")
-    
-    # For demo purposes, we'll use a simple token input
-    # In production, this would integrate with Azure AD OAuth2 flow
-    with st.form("auth_form"):
-        st.subheader("Login")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
-        
-        if submitted:
-            if username and password:
-                # In production, validate against Azure AD
-                # For now, simulate successful authentication
-                st.session_state.authenticated = True
-                st.session_state.user_info = {"username": username, "email": f"{username}@company.com"}
-                st.rerun()
-            else:
-                st.error("Please enter both username and password")
+    """Handle user authentication with JWT"""
+    render_login_form()
 
 def upload_file_to_django(file, metadata):
     """Upload file to Django backend"""
@@ -70,9 +52,7 @@ def upload_file_to_django(file, metadata):
             "user_id": st.session_state.user_info.get("username", "anonymous")
         }
         
-        headers = {}
-        if st.session_state.access_token:
-            headers["Authorization"] = f"Bearer {st.session_state.access_token}"
+        headers = get_auth_headers()
         
         response = requests.post(
             UPLOAD_ENDPOINT,
@@ -98,9 +78,7 @@ def upload_file_to_django(file, metadata):
 def get_processing_status(task_id):
     """Check processing status from Django backend"""
     try:
-        headers = {}
-        if st.session_state.access_token:
-            headers["Authorization"] = f"Bearer {st.session_state.access_token}"
+        headers = get_auth_headers()
         
         response = requests.get(
             f"{RESULTS_ENDPOINT}{task_id}/",
@@ -173,7 +151,7 @@ def sidebar_navigation():
         # Logout button
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.authenticated = False
-            st.session_state.access_token = None
+            st.session_state.jwt_tokens = None
             st.session_state.user_info = None
             st.session_state.current_page = "Home"
             st.rerun()

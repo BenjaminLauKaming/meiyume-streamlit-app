@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 import uuid
 import os
 
-class CADUpload(models.Model):
-    """Model to track CAD file uploads and their metadata"""
+class BaseUpload(models.Model):
+    """Base model for all file uploads across different assistants"""
     
     STATUS_CHOICES = [
         ('uploaded', 'Uploaded'),
@@ -15,18 +15,16 @@ class CADUpload(models.Model):
     
     # Primary fields
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cad_uploads')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='%(class)s_uploads')
     
     # File information
     original_filename = models.CharField(max_length=255)
-    file_path = models.FileField(upload_to='cad_files/%Y/%m/%d/')
+    file_path = models.FileField(upload_to='uploads/%Y/%m/%d/')
     file_size = models.PositiveIntegerField()  # Size in bytes
     file_hash = models.CharField(max_length=64, help_text="SHA256 hash of the file")
     
     # Upload metadata
     project_name = models.CharField(max_length=200, blank=True, null=True)
-    drawing_number = models.CharField(max_length=100, blank=True, null=True)
-    revision = models.CharField(max_length=50, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     
     # Processing information
@@ -48,6 +46,7 @@ class CADUpload(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
+        abstract = True
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['user', 'status']),
@@ -56,7 +55,7 @@ class CADUpload(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.original_filename} - {self.user.username} - {self.status}"
+        return f"{self.original_filename} - {self.user.username if self.user else 'Unknown'} - {self.status}"
     
     @property
     def is_processing(self):
@@ -70,17 +69,8 @@ class CADUpload(models.Model):
     def is_failed(self):
         return self.status == 'failed'
 
-class AnalysisOptions(models.Model):
-    """Model to store analysis configuration for each upload"""
-    
-    upload = models.OneToOneField(CADUpload, on_delete=models.CASCADE, related_name='analysis_options')
-    
-    # Analysis settings
-    extract_dimensions = models.BooleanField(default=True)
-    extract_tolerances = models.BooleanField(default=True)
-    analyze_part_relationships = models.BooleanField(default=True)
-    extract_material_specifications = models.BooleanField(default=False)
-    detect_assembly_components = models.BooleanField(default=False)
+class BaseAnalysisOptions(models.Model):
+    """Base model for analysis configuration across different assistants"""
     
     # AI model settings
     ai_model_version = models.CharField(max_length=50, default='gemini-pro')
@@ -93,22 +83,14 @@ class AnalysisOptions(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        abstract = True
+    
     def __str__(self):
         return f"Analysis Options for {self.upload.original_filename}"
 
-class AnalysisResult(models.Model):
-    """Model to store the results of CAD analysis"""
-    
-    RESULT_TYPE_CHOICES = [
-        ('dimensions', 'Dimensions'),
-        ('tolerances', 'Tolerances'),
-        ('relationships', 'Part Relationships'),
-        ('materials', 'Materials'),
-        ('assembly', 'Assembly Components'),
-    ]
-    
-    upload = models.ForeignKey(CADUpload, on_delete=models.CASCADE, related_name='results')
-    result_type = models.CharField(max_length=20, choices=RESULT_TYPE_CHOICES)
+class BaseAnalysisResult(models.Model):
+    """Base model for analysis results across different assistants"""
     
     # Result data
     raw_data = models.JSONField(help_text="Raw JSON data from AI analysis")
@@ -127,17 +109,16 @@ class AnalysisResult(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ['upload', 'result_type']
+        abstract = True
         indexes = [
-            models.Index(fields=['upload', 'result_type']),
             models.Index(fields=['created_at']),
         ]
     
     def __str__(self):
-        return f"{self.result_type} results for {self.upload.original_filename}"
+        return f"Analysis results for {self.upload.original_filename}"
 
 class ProcessingLog(models.Model):
-    """Model to track detailed processing logs"""
+    """Model to track detailed processing logs across all assistants"""
     
     LOG_LEVEL_CHOICES = [
         ('info', 'Info'),
@@ -146,7 +127,10 @@ class ProcessingLog(models.Model):
         ('debug', 'Debug'),
     ]
     
-    upload = models.ForeignKey(CADUpload, on_delete=models.CASCADE, related_name='processing_logs', null=True, blank=True)
+    # Generic foreign key to any upload model
+    content_type = models.ForeignKey('contenttypes.ContentType', on_delete=models.CASCADE)
+    object_id = models.UUIDField()
+    
     level = models.CharField(max_length=10, choices=LOG_LEVEL_CHOICES)
     message = models.TextField()
     
@@ -162,7 +146,7 @@ class ProcessingLog(models.Model):
     class Meta:
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['upload', 'level']),
+            models.Index(fields=['content_type', 'object_id', 'level']),
             models.Index(fields=['created_at']),
         ]
     
@@ -170,14 +154,9 @@ class ProcessingLog(models.Model):
         return f"[{self.level.upper()}] {self.step}: {self.message[:50]}..."
 
 class UserPreferences(models.Model):
-    """Model to store user preferences and settings"""
+    """Model to store user preferences and settings across all assistants"""
     
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cad_preferences')
-    
-    # Analysis preferences
-    default_extract_dimensions = models.BooleanField(default=True)
-    default_extract_tolerances = models.BooleanField(default=True)
-    default_analyze_relationships = models.BooleanField(default=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='meiyume_preferences')
     
     # Notification preferences
     email_notifications = models.BooleanField(default=True)
@@ -188,8 +167,22 @@ class UserPreferences(models.Model):
     department = models.CharField(max_length=100, blank=True, null=True)
     job_title = models.CharField(max_length=100, blank=True, null=True)
     
+    # Assistant-specific preferences (stored as JSON)
+    assistant_preferences = models.JSONField(default=dict, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return f"Preferences for {self.user.username}"
+    
+    def get_assistant_preference(self, assistant_name, key, default=None):
+        """Get a specific preference for an assistant"""
+        return self.assistant_preferences.get(assistant_name, {}).get(key, default)
+    
+    def set_assistant_preference(self, assistant_name, key, value):
+        """Set a specific preference for an assistant"""
+        if assistant_name not in self.assistant_preferences:
+            self.assistant_preferences[assistant_name] = {}
+        self.assistant_preferences[assistant_name][key] = value
+        self.save() 

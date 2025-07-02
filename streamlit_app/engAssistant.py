@@ -4,12 +4,13 @@ import json
 import os
 import time
 from dotenv import load_dotenv
+from auth_utils import get_auth_headers
 
 load_dotenv()
 
 # Configuration
 DJANGO_API_URL = os.getenv("DJANGO_API_URL", "http://localhost:8000")
-UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/upload/"
+UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/uploads/"
 RESULTS_ENDPOINT = f"{DJANGO_API_URL}/api/results/"
 
 def upload_file_to_django(file, metadata):
@@ -21,9 +22,7 @@ def upload_file_to_django(file, metadata):
             "user_id": st.session_state.user_info.get("username", "anonymous")
         }
         
-        headers = {}
-        if st.session_state.access_token:
-            headers["Authorization"] = f"Bearer {st.session_state.access_token}"
+        headers = get_auth_headers()
         
         response = requests.post(
             UPLOAD_ENDPOINT,
@@ -33,7 +32,7 @@ def upload_file_to_django(file, metadata):
             timeout=30
         )
         
-        if response.status_code == 200:
+        if response.status_code in [200, 201]:  # 200 = OK, 201 = Created
             return response.json()
         else:
             st.error(f"Upload failed: {response.status_code} - {response.text}")
@@ -49,9 +48,7 @@ def upload_file_to_django(file, metadata):
 def get_processing_status(task_id):
     """Check processing status from Django backend"""
     try:
-        headers = {}
-        if st.session_state.access_token:
-            headers["Authorization"] = f"Bearer {st.session_state.access_token}"
+        headers = get_auth_headers()
         
         response = requests.get(
             f"{RESULTS_ENDPOINT}{task_id}/",
@@ -217,13 +214,12 @@ def engineering_assistant():
                     "analysis_options": {
                         "extract_dimensions": extract_dimensions,
                         "extract_tolerances": extract_tolerances,
-                        "part_relationships": part_relationships,
-                        "material_analysis": material_analysis,
-                        "surface_finish": surface_finish,
-                        "assembly_info": assembly_info,
-                        "ai_model": ai_model,
-                        "output_format": output_format,
-                        "accuracy_level": accuracy_level
+                        "analyze_part_relationships": part_relationships,
+                        "extract_material_specifications": material_analysis,
+                        "detect_assembly_components": assembly_info,
+                        "ai_model_version": "gemini-2.5-flash" if ai_model == "Gemini 2.5 Flash (Default)" else "gemini-pro",
+                        "confidence_threshold": accuracy_level / 5.0,  # Convert 1-5 scale to 0.2-1.0
+                        "max_analysis_time": 300
                     }
                 }
                 
