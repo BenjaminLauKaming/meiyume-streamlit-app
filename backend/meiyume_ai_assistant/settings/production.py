@@ -1,5 +1,5 @@
 """
-Production settings for ai_cad_analyzer project.
+Production settings for meiyume_ai_assistant project.
 """
 
 from .base import *

@@ -4,36 +4,46 @@ globs:
 alwaysApply: false
 ---
 project:
-  name: ai-cad-analyzer
+  name: meiyume_ai_assistant
   language: python
   description: >
-    A full-stack application with a Streamlit frontend and a Django backend for analyzing 
-    2D CAD PDF drawings using AI. The app extracts part-contact data via a Google Gemini model, 
-    orchestrated through an n8n workflow. Outputs are provided as structured CSV or reports.
+    A comprehensive full-stack application with a Streamlit frontend and a Django backend for multiple 
+    AI-powered assistants. The system currently supports CAD analysis and is designed to easily accommodate 
+    additional AI assistants through a modular architecture. Each assistant can connect to different n8n workflows.
 
 rules:
   - description: >
-      The frontend is built with Streamlit. Users upload 2D CAD PDF drawings via Streamlit, 
-      which interfaces with a Django REST API.
+      The frontend is built with Streamlit and supports multiple AI assistants through a unified interface.
+      Users can switch between different assistants (CAD, Quality, Complaint) via a sidebar selector.
   - description: >
-      Django handles user authentication, upload logging, file storage, and metadata management. 
-      It forwards the uploaded files and metadata to the n8n webhook endpoint.
+      Django handles user authentication, upload logging, file storage, and metadata management across all assistants.
+      It forwards uploaded files and metadata to appropriate n8n webhook endpoints based on the assistant type.
   - description: >
-      n8n is configured to receive HTTP POST requests. It triggers a Google Gemini model call 
-      to analyze the drawing and extract dimensions, tolerance data, and part relationships.
+      The backend uses a modular architecture with a core module (meiyume_core) for shared functionality
+      and individual assistant modules (assistants/cad, assistants/quality, assistants/complaint) for specific features.
   - description: >
-      Include prompt-tuning logic in the n8n node before calling Gemini, to improve result accuracy 
-      on complex engineering drawings.
+      n8n is configured to receive HTTP POST requests for different assistants. Each assistant can have its own
+      workflow configuration and can trigger different AI models (Google Gemini, OpenAI, etc.) based on the task.
   - description: >
-      n8n responds with a downloadable CSV file or a link to a report, which Django stores and 
-      Streamlit presents to the user.
+      Include prompt-tuning logic in the n8n nodes before calling AI models, to improve result accuracy 
+      on complex engineering, quality, or complaint analysis tasks.
   - description: >
-      Use Django REST Framework for building the API endpoints and Celery for managing asynchronous 
-      processing if needed in future versions.
+      n8n responds with structured data or downloadable files, which Django stores and Streamlit presents to the user.
+      Each assistant can have different output formats (CSV, reports, visualizations).
+  - description: >
+      Use Django REST Framework for building the API endpoints with assistant-specific routes (/api/cad/, /api/quality/, etc.)
+      and Celery for managing asynchronous processing if needed in future versions.
   - description: >
       The backend uses PostgreSQL as the primary database, configured via Django's settings.
-      It stores user data, file uploads, metadata, and links to processed results.
+      It stores user data, file uploads, metadata, and links to processed results across all assistants.
   - description: >
       Django is integrated with Microsoft Azure Active Directory. All users log in using 
       their company Microsoft credentials via OAuth2 (Azure AD SSO).
+  - description: >
+      The system is designed for easy extensibility. Adding a new assistant requires:
+      1. Creating a new assistant module under backend/assistants/
+      2. Defining assistant-specific models, views, and serializers
+      3. Creating corresponding n8n workflow
+      4. Adding frontend interface in Streamlit
+      5. Updating URL routing and admin configuration
 

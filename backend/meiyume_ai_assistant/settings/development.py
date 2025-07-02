@@ -1,5 +1,5 @@
 """
-Development settings for ai_cad_analyzer project.
+Development settings for meiyume_ai_assistant project.
 """
 
 from .base import *

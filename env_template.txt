@@ -12,25 +12,25 @@ ENVIRONMENT=development
 # ===========================================
 SECRET_KEY=your-secret-key-here-generate-a-new-one
 DEBUG=True
-DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.development
+DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.development
 ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,django
 
 # ===========================================
 # DATABASE CONFIGURATION
 # ===========================================
 # Option 1: Use DATABASE_URL (recommended)
-DATABASE_URL=postgresql://cad_user:cad_password@localhost:5432/cad_analyzer_dev
+DATABASE_URL=postgresql://cad_user:cad_password@localhost:5432/meiyume_ai_assistant_dev
 
 # Option 2: Individual database settings
 DB_ENGINE=django.db.backends.postgresql
-DB_NAME=cad_analyzer_dev
+DB_NAME=meiyume_ai_assistant_dev
 DB_USER=cad_user
 DB_PASSWORD=cad_password
 DB_HOST=localhost
 DB_PORT=5432
 
 # PostgreSQL Docker Settings
-POSTGRES_DB=cad_analyzer_dev
+POSTGRES_DB=meiyume_ai_assistant_dev
 POSTGRES_USER=cad_user
 POSTGRES_PASSWORD=cad_password
 

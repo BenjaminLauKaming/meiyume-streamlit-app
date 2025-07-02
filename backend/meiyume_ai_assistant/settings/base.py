@@ -1,5 +1,5 @@
 """
-Base Django settings for ai_cad_analyzer project.
+Base Django settings for meiyume_ai_assistant project.
 """
 
 import os
@@ -32,7 +32,10 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    "cad_core",
+    "meiyume_core",
+    "assistants.cad",
+    "assistants.quality",
+    "assistants.complaint",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -48,7 +51,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "ai_cad_analyzer.urls"
+ROOT_URLCONF = "meiyume_ai_assistant.urls"
 
 TEMPLATES = [
     {
@@ -66,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "ai_cad_analyzer.wsgi.application"
+WSGI_APPLICATION = "meiyume_ai_assistant.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

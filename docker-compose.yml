@@ -4,9 +4,9 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    container_name: cad_analyzer_db_dev
+    container_name: meiyume_ai_assistant_db_dev
     environment:
-      POSTGRES_DB: cad_analyzer_dev
+      POSTGRES_DB: meiyume_ai_assistant_dev
       POSTGRES_USER: cad_user
       POSTGRES_PASSWORD: cad_password_dev
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -21,7 +21,7 @@ services:
   # Redis for Celery
   redis:
     image: redis:7-alpine
-    container_name: cad_analyzer_redis_dev
+    container_name: meiyume_ai_assistant_redis_dev
     ports:
       - "6379:6379"
     volumes:
@@ -34,10 +34,10 @@ services:
     build:
       context: .
       dockerfile: docker/django/Dockerfile.dev
-    container_name: cad_analyzer_django_dev
+    container_name: meiyume_ai_assistant_django_dev
     environment:
-      - DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.development
-      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/cad_analyzer_dev
+      - DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.development
+      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/meiyume_ai_assistant_dev
       - REDIS_URL=redis://redis:6379/0
       - N8N_WEBHOOK_URL=https://meiyume.app.n8n.cloud/webhook/fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e
     ports:
@@ -61,7 +61,7 @@ services:
     build:
       context: .
       dockerfile: docker/streamlit/Dockerfile.dev
-    container_name: cad_analyzer_streamlit_dev
+    container_name: meiyume_ai_assistant_streamlit_dev
     environment:
       - DJANGO_API_URL=http://django:8000
     ports:
@@ -78,7 +78,7 @@ services:
   # n8n Workflow Engine
   n8n:
     image: n8nio/n8n:1.19.4
-    container_name: cad_analyzer_n8n_dev
+    container_name: meiyume_ai_assistant_n8n_dev
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=admin
@@ -100,10 +100,10 @@ services:
     build:
       context: .
       dockerfile: docker/django/Dockerfile.dev
-    container_name: cad_analyzer_celery_dev
+    container_name: meiyume_ai_assistant_celery_dev
     environment:
-      - DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.development
-      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/cad_analyzer_dev
+      - DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.development
+      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/meiyume_ai_assistant_dev
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend:/app
@@ -113,7 +113,7 @@ services:
       - redis
     networks:
       - cad_analyzer_network
-    command: celery -A ai_cad_analyzer worker -l info
+    command: celery -A meiyume_ai_assistant worker -l info
 
 volumes:
   postgres_data_dev:
@@ -123,5 +123,5 @@ volumes:
   n8n_data_dev:
 
 networks:
-  cad_analyzer_network:
+  meiyume_ai_assistant_network:
     driver: bridge 

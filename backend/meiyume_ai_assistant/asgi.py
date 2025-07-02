@@ -1,5 +1,5 @@
 """
-ASGI config for ai_cad_analyzer project.
+ASGI config for meiyume_ai_assistant project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ai_cad_analyzer.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "meiyume_ai_assistant.settings")
 
 application = get_asgi_application()

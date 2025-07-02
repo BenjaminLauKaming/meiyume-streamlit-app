@@ -1,320 +1,185 @@
+"""
+Meiyume AI Assistant - Main Streamlit Application
+
+A comprehensive platform for multiple AI-powered assistants including:
+- CAD Analysis Assistant
+- Quality Assistant (coming soon)
+- Complaint Assistant (coming soon)
+"""
+
 import streamlit as st
 import requests
 import json
-import os
-from dotenv import load_dotenv
-import time
-from pathlib import Path
-
-# Import assistant modules
-from engAssistant import engineering_assistant
-from qualityAssistant import quality_assistant
-from auth_utils import render_login_form, ensure_authenticated, get_auth_headers
-
-load_dotenv()
-
-# Configuration
-DJANGO_API_URL = os.getenv("DJANGO_API_URL", "http://localhost:8000")
-UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/uploads/"
-RESULTS_ENDPOINT = f"{DJANGO_API_URL}/api/results/"
+from datetime import datetime
+import pandas as pd
 
 # Page configuration
 st.set_page_config(
-    page_title="AI CAD Analyzer Hub",
-    page_icon=" ",
+    page_title="Meiyume AI Assistant",
+    page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-def init_session_state():
-    """Initialize session state variables"""
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-    if 'jwt_tokens' not in st.session_state:
-        st.session_state.jwt_tokens = None
-    if 'user_info' not in st.session_state:
-        st.session_state.user_info = None
-    if 'upload_history' not in st.session_state:
-        st.session_state.upload_history = []
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = "Home"
-
-def authenticate_user():
-    """Handle user authentication with JWT"""
-    render_login_form()
-
-def upload_file_to_django(file, metadata):
-    """Upload file to Django backend"""
-    try:
-        files = {"file": (file.name, file.getvalue(), file.type)}
-        data = {
-            "metadata": json.dumps(metadata),
-            "user_id": st.session_state.user_info.get("username", "anonymous")
-        }
-        
-        headers = get_auth_headers()
-        
-        response = requests.post(
-            UPLOAD_ENDPOINT,
-            files=files,
-            data=data,
-            headers=headers,
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"Upload failed: {response.status_code} - {response.text}")
-            return None
-            
-    except requests.exceptions.RequestException as e:
-        st.error(f"Network error: {str(e)}")
-        return None
-    except Exception as e:
-        st.error(f"Upload error: {str(e)}")
-        return None
-
-def get_processing_status(task_id):
-    """Check processing status from Django backend"""
-    try:
-        headers = get_auth_headers()
-        
-        response = requests.get(
-            f"{RESULTS_ENDPOINT}{task_id}/",
-            headers=headers,
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
-            
-    except requests.exceptions.RequestException:
-        return None
-
-def sidebar_navigation():
-    """Render sidebar navigation"""
-    with st.sidebar:
-        st.title("AI Agent Hub")
-        st.markdown("---")
-        
-        # User info
-        st.subheader("👤 User Info")
-        st.write(f"**Username:** {st.session_state.user_info['username']}")
-        st.write(f"**Email:** {st.session_state.user_info['email']}")
-        st.markdown("---")
-        
-        # Navigation menu
-        st.subheader("🧭 Navigation")
-        
-        # Home button
-        if st.button("Home", use_container_width=True, 
-                    type="primary" if st.session_state.current_page == "Home" else "secondary"):
-            st.session_state.current_page = "Home"
-            st.rerun()
-        
-        # Engineering Assistant button
-        if st.button("Engineering Assistant", use_container_width=True,
-                    type="primary" if st.session_state.current_page == "Engineering" else "secondary"):
-            st.session_state.current_page = "Engineering"
-            st.rerun()
-        
-        # Quality Assistant button
-        if st.button("Quality Assistant", use_container_width=True,
-                    type="primary" if st.session_state.current_page == "Quality" else "secondary"):
-            st.session_state.current_page = "Quality"
-            st.rerun()
-
-        # Complaint Assistant button
-        if st.button("Complaint Assistant", use_container_width=True,
-                    type="primary" if st.session_state.current_page == "Complaint" else "secondary"):
-            st.session_state.current_page = "Complaint"
-            st.rerun()
-        
-        st.markdown("---")
-        
-        # System status
-        st.subheader("🔄 System Status")
-        try:
-            response = requests.get(f"{DJANGO_API_URL}/api/health/", timeout=5)
-            if response.status_code == 200:
-                st.success("🟢 Backend: Online")
-            else:
-                st.error("🔴 Backend: Issues")
-        except:
-            st.error("🔴 Backend: Offline")
-        
-        st.markdown("---")
-        
-        # Logout button
-        if st.button("🚪 Logout", use_container_width=True):
-            st.session_state.authenticated = False
-            st.session_state.jwt_tokens = None
-            st.session_state.user_info = None
-            st.session_state.current_page = "Home"
-            st.rerun()
-
-def home_page():
-    """Render the main home/hub page"""
-    # Header
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.title("AI Agent Hub")
-        st.markdown("### Welcome to your Engineering & Quality Control Center")
-        st.markdown("Developed by Benjamin Lau")
-    
-    st.markdown("---")
-    
-    # Overview cards
-    col1, col2, col3= st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div style="background: linear-gradient(100deg, #667eea 0%, #764ba2 100%); 
-                    padding: 2rem; border-radius: 15px; color: white; margin: 1rem 0;">
-            <h3>Engineering Assistant</h3>
-            <p>Advanced CAD drawing analysis powered by AI</p>
-            <ul>
-                <li> Dimension extraction</li>
-                <li> Tolerance analysis</li>
-                <li> Part relationship mapping</li>
-                <li> Technical report generation</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("🚀 Launch Engineering Assistant", use_container_width=True, type="primary"):
-            st.session_state.current_page = "Engineering"
-            st.rerun()
-    
-    with col2:
-        st.markdown("""
-        <div style="background: linear-gradient(100deg, #f093fb 0%, #f5576c 100%); 
-                    padding: 2rem; border-radius: 15px; color: white; margin: 1rem 0;">
-            <h3>Quality Assistant</h3>
-            <p>Comprehensive quality control and compliance tools</p>
-            <ul>
-                <li> Quality standards verification</li>
-                <li> Compliance checklists</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("🎯 Launch Quality Assistant", use_container_width=True, type="primary"):
-            st.session_state.current_page = "Quality"
-            st.rerun()
-
-    with col3:
-        st.markdown("""
-        <div style="background: linear-gradient(100deg, #87ceeb 0%, #B9EBFF 100%);
-                    padding: 2rem; border-radius: 15px; color: white; margin: 1rem 0;">
-            <h3>Complaint Assistant</h3>
-            <p>Comprehensive quality control and compliance tools</p>
-            <ul>
-                <li> Chat Bot</li>
-                <li> Potential Solutions</li>
-                <li> Root cause Analysis</li>
-                <li> History Searching</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("💣 Launch Complaint Assistant", use_container_width=True, type="primary"):
-            st.session_state.current_page = "Complaint"
-            st.rerun()
-    
-    st.markdown("---")
-    
-    # Recent activity and stats
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric(
-            label="📊 Total Analyses",
-            value=len(st.session_state.upload_history),
-            delta=f"+{len([h for h in st.session_state.upload_history if time.time() - h.get('timestamp', 0) < 86400])} today"
-        )
-    
-    with col2:
-        completed = len([h for h in st.session_state.upload_history if h.get('status') == 'completed'])
-        st.metric(
-            label="✅ Completed",
-            value=completed,
-            delta=f"{(completed/max(len(st.session_state.upload_history), 1)*100):.1f}% success rate"
-        )
-    
-    with col3:
-        processing = len([h for h in st.session_state.upload_history if h.get('status') == 'processing'])
-        st.metric(
-            label="⏳ Processing",
-            value=processing
-        )
-    
-    # Recent uploads section
-    if st.session_state.upload_history:
-        st.subheader("📈 Recent Activity")
-        
-        # Create a nice table of recent uploads
-        recent_uploads = sorted(st.session_state.upload_history, 
-                              key=lambda x: x.get('timestamp', 0), reverse=True)[:5]
-        
-        for upload in recent_uploads:
-            with st.expander(f"📄 {upload.get('filename', 'Unknown')} - {upload.get('status', 'Unknown').title()}"):
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.write(f"**Status:** {upload.get('status', 'Unknown').title()}")
-                with col2:
-                    st.write(f"**Time:** {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(upload.get('timestamp', 0)))}")
-                with col3:
-                    st.write(f"**Task ID:** {upload.get('task_id', 'N/A')}")
-    
-    # Quick actions
-    st.markdown("---")
-    st.subheader("🚀 Quick Actions")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("📁 Upload New Drawing", use_container_width=True):
-            st.session_state.current_page = "Engineering"
-            st.rerun()
-    
-    with col2:
-        if st.button("📊 View Analytics", use_container_width=True):
-            st.info("Analytics dashboard coming soon!")
-    
-    with col3:
-        if st.button("⚙️ Settings", use_container_width=True):
-            st.info("Settings panel coming soon!")
-    
-    with col4:
-        if st.button("❓ Help & Docs", use_container_width=True):
-            st.info("Documentation coming soon!")
-
-def main_app():
-    """Main application interface with navigation"""
-    sidebar_navigation()
-    
-    # Render the appropriate page based on navigation
-    if st.session_state.current_page == "Home":
-        home_page()
-    elif st.session_state.current_page == "Engineering":
-        engineering_assistant()
-    elif st.session_state.current_page == "Quality":
-        quality_assistant()
-    elif st.session_state.current_page == "Complaint":
-        complaint_assistant()
+# Custom CSS for better styling
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 2rem;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .assistant-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
+        color: white;
+        margin: 1rem 0;
+    }
+    .status-success {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .status-processing {
+        color: #ffc107;
+        font-weight: bold;
+    }
+    .status-error {
+        color: #dc3545;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 def main():
-    """Main application entry point"""
-    init_session_state()
+    """Main application function"""
     
-    if not st.session_state.authenticated:
-        authenticate_user()
-    else:
-        main_app()
+    # Main header
+    st.markdown('<h1 class="main-header">🤖 Meiyume AI Assistant</h1>', unsafe_allow_html=True)
+    
+    # Sidebar for navigation
+    st.sidebar.title("🎯 AI Assistants")
+    
+    # Assistant selection
+    assistant = st.sidebar.selectbox(
+        "Choose an Assistant",
+        ["CAD Analysis", "Quality Assistant", "Complaint Assistant"],
+        help="Select the AI assistant you want to use"
+    )
+    
+    # Display selected assistant
+    if assistant == "CAD Analysis":
+        show_cad_assistant()
+    elif assistant == "Quality Assistant":
+        show_quality_assistant()
+    elif assistant == "Complaint Assistant":
+        show_complaint_assistant()
+    
+    # Footer
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**Version:** 1.0.0")
+    st.sidebar.markdown("**Powered by:** Meiyume AI")
+
+def show_cad_assistant():
+    """Display CAD Analysis Assistant"""
+    
+    st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
+    st.markdown("## 📐 CAD Analysis Assistant")
+    st.markdown("Analyze 2D CAD PDF drawings to extract dimensions, tolerances, and part relationships using AI.")
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Import and show CAD assistant
+    try:
+        from engAssistant import engineering_assistant
+        engineering_assistant()
+    except ImportError:
+        st.error("CAD Analysis Assistant is not available. Please check the installation.")
+        st.info("The CAD assistant module could not be loaded. This might be due to missing dependencies or configuration issues.")
+
+def show_quality_assistant():
+    """Display Quality Assistant (placeholder)"""
+    
+    st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
+    st.markdown("## 🔍 Quality Assistant")
+    st.markdown("Quality control and inspection analysis with defect detection and classification.")
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.info("🚧 Quality Assistant is coming soon!")
+    st.markdown("""
+    **Planned Features:**
+    - Quality control analysis
+    - Defect detection and classification
+    - Quality metrics and reporting
+    - Automated inspection workflows
+    
+    This assistant will help you analyze quality control data and identify potential issues in manufacturing processes.
+    """)
+
+def show_complaint_assistant():
+    """Display Complaint Assistant (placeholder)"""
+    
+    st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
+    st.markdown("## 📝 Complaint Assistant")
+    st.markdown("Customer complaint analysis and categorization with sentiment analysis and priority assessment.")
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.info("🚧 Complaint Assistant is coming soon!")
+    st.markdown("""
+    **Planned Features:**
+    - Customer complaint analysis
+    - Sentiment analysis
+    - Priority assessment
+    - Automated response suggestions
+    - Trend analysis and reporting
+    
+    This assistant will help you process and analyze customer complaints to improve customer satisfaction and product quality.
+    """)
+
+def show_dashboard():
+    """Show dashboard with statistics across all assistants"""
+    
+    st.markdown("## 📊 Dashboard")
+    
+    # Get statistics from API
+    try:
+        response = requests.get("http://localhost:8000/api/dashboard/stats/")
+        if response.status_code == 200:
+            stats = response.json()
+            
+            # Display statistics
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Total Uploads", stats.get('total_uploads', 0))
+            
+            with col2:
+                st.metric("Completed", stats.get('completed_uploads', 0))
+            
+            with col3:
+                st.metric("Processing", stats.get('processing_uploads', 0))
+            
+            with col4:
+                st.metric("Failed", stats.get('failed_uploads', 0))
+            
+            # Recent activity
+            st.subheader("Recent Activity")
+            recent_uploads = stats.get('recent_uploads', [])
+            
+            if recent_uploads:
+                df = pd.DataFrame(recent_uploads)
+                st.dataframe(df)
+            else:
+                st.info("No recent activity to display.")
+                
+        else:
+            st.error("Failed to load dashboard statistics.")
+            
+    except Exception as e:
+        st.error(f"Error loading dashboard: {str(e)}")
 
 if __name__ == "__main__":
     main() 

@@ -1,5 +1,5 @@
 """
-URL configuration for ai_cad_analyzer project.
+URL configuration for meiyume_ai_assistant project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
@@ -29,12 +29,13 @@ from rest_framework_simplejwt.views import (
 def api_root(request):
     """Simple API root endpoint"""
     return HttpResponse("""
-    <h1>AI CAD Analyzer API</h1>
+    <h1>Meiyume AI Assistant API</h1>
     <p>Available endpoints:</p>
     <ul>
         <li><a href="/api/">API Root</a></li>
-        <li><a href="/api/uploads/">CAD Uploads</a></li>
-        <li><a href="/api/results/">Processing Results</a></li>
+        <li><a href="/api/cad/">CAD Analysis</a></li>
+        <li><a href="/api/quality/">Quality Analysis</a></li>
+        <li><a href="/api/complaint/">Complaint Analysis</a></li>
         <li><a href="/api/preferences/">User Preferences</a></li>
         <li><a href="/api/dashboard/stats/">Dashboard Stats</a></li>
         <li><a href="/api/health/">Health Check</a></li>
@@ -45,7 +46,10 @@ def api_root(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', api_root, name='api-root'),
-    path('api/', include('cad_core.urls')),
+    path('api/', include('meiyume_core.urls')),
+    path('api/cad/', include('assistants.cad.urls')),
+    path('api/quality/', include('assistants.quality.urls')),
+    path('api/complaint/', include('assistants.complaint.urls')),
     
     # JWT authentication endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
