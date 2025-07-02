@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Production Environment Startup Script
-echo "🚀 Starting CAD Analyzer Production Environment..."
+echo "🚀 Starting Meiyume AI Assistant Production Environment..."
 
 # Check if .env.prod file exists
 if [ ! -f .env.prod ]; then
@@ -53,8 +53,8 @@ fi
 # Create backup before deployment
 echo "💾 Creating database backup..."
 timestamp=$(date +%Y%m%d_%H%M%S)
-if docker ps -q -f name=cad_analyzer_db_prod; then
-    docker exec cad_analyzer_db_prod pg_dump -U $POSTGRES_USER $POSTGRES_DB > backups/backup_$timestamp.sql
+if docker ps -q -f name=meiyume_ai_assistant_db_prod; then
+    docker exec meiyume_ai_assistant_db_prod pg_dump -U $POSTGRES_USER $POSTGRES_DB > backups/backup_$timestamp.sql
     echo "✅ Backup created: backups/backup_$timestamp.sql"
 fi
 

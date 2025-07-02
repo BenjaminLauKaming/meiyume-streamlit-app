@@ -4,7 +4,7 @@ services:
   # PostgreSQL Database - Production
   db:
     image: postgres:15-alpine
-    container_name: cad_analyzer_db_prod
+    container_name: meiyume_ai_assistant_db_prod
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -13,18 +13,18 @@ services:
       - postgres_data_prod:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
     # Don't expose port in production - only internal access
 
   # Redis for Celery - Production
   redis:
     image: redis:7-alpine
-    container_name: cad_analyzer_redis_prod
+    container_name: meiyume_ai_assistant_redis_prod
     volumes:
       - redis_data_prod:/data
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
 
@@ -33,9 +33,9 @@ services:
     build:
       context: .
       dockerfile: docker/django/Dockerfile.prod
-    container_name: cad_analyzer_django_prod
+    container_name: meiyume_ai_assistant_django_prod
     environment:
-      - DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.production
+      - DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
@@ -51,7 +51,7 @@ services:
       - db
       - redis
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
     # Internal port only - will be accessed through nginx
 
@@ -60,20 +60,20 @@ services:
     build:
       context: .
       dockerfile: docker/streamlit/Dockerfile.prod
-    container_name: cad_analyzer_streamlit_prod
+    container_name: meiyume_ai_assistant_streamlit_prod
     environment:
       - DJANGO_API_URL=http://django:8000
     depends_on:
       - django
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
     # Internal port only - will be accessed through nginx
 
   # n8n Workflow Engine - Production
   n8n:
     image: n8nio/n8n:1.19.4
-    container_name: cad_analyzer_n8n_prod
+    container_name: meiyume_ai_assistant_n8n_prod
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_ADMIN_USER}
@@ -89,7 +89,7 @@ services:
     volumes:
       - n8n_data_prod:/home/node/.n8n
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
 
   # Celery Worker - Production
@@ -97,9 +97,9 @@ services:
     build:
       context: .
       dockerfile: docker/django/Dockerfile.prod
-    container_name: cad_analyzer_celery_prod
+    container_name: meiyume_ai_assistant_celery_prod
     environment:
-      - DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.production
+      - DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
@@ -110,18 +110,18 @@ services:
       - db
       - redis
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
-    command: celery -A ai_cad_analyzer worker -l info
+    command: celery -A meiyume_ai_assistant worker -l info
 
   # Celery Beat (Scheduler) - Production
   celery-beat:
     build:
       context: .
       dockerfile: docker/django/Dockerfile.prod
-    container_name: cad_analyzer_celery_beat_prod
+    container_name: meiyume_ai_assistant_celery_beat_prod
     environment:
-      - DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.production
+      - DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
@@ -129,16 +129,16 @@ services:
       - db
       - redis
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
-    command: celery -A ai_cad_analyzer beat -l info
+    command: celery -A meiyume_ai_assistant beat -l info
 
   # Nginx Reverse Proxy - Production
   nginx:
     build:
       context: ./docker/nginx
       dockerfile: Dockerfile
-    container_name: cad_analyzer_nginx_prod
+    container_name: meiyume_ai_assistant_nginx_prod
     ports:
       - "80:80"
       - "443:443"
@@ -151,7 +151,7 @@ services:
       - streamlit
       - n8n
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     restart: unless-stopped
 
 volumes:
@@ -162,5 +162,5 @@ volumes:
   n8n_data_prod:
 
 networks:
-  cad_analyzer_network:
+  meiyume_ai_assistant_network:
     driver: bridge 

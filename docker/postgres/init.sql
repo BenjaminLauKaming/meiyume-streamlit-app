@@ -1,22 +1,20 @@
--- PostgreSQL initialization script for CAD Analyzer
+-- PostgreSQL initialization script for Meiyume AI Assistant
 
 -- Create development database
-CREATE DATABASE cad_analyzer_dev;
+CREATE DATABASE meiyume_ai_assistant_dev;
 
--- Create production database (if not exists)
-SELECT 'CREATE DATABASE cad_analyzer_prod'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'cad_analyzer_prod')\gexec
+-- Create production database
+SELECT 'CREATE DATABASE meiyume_ai_assistant_prod'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'meiyume_ai_assistant_prod')\gexec
 
--- Grant all privileges to the user
-GRANT ALL PRIVILEGES ON DATABASE cad_analyzer_dev TO cad_user;
-GRANT ALL PRIVILEGES ON DATABASE cad_analyzer_prod TO cad_user;
+-- Grant privileges to meiyume_user
+GRANT ALL PRIVILEGES ON DATABASE meiyume_ai_assistant_dev TO meiyume_user;
+GRANT ALL PRIVILEGES ON DATABASE meiyume_ai_assistant_prod TO meiyume_user;
 
--- Create extensions if needed
-\c cad_analyzer_dev;
+-- Connect to development database and create extensions
+\c meiyume_ai_assistant_dev;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-\c cad_analyzer_prod;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Switch back to default database
-\c postgres; 
+-- Connect to production database and create extensions
+\c meiyume_ai_assistant_prod;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; 

@@ -7,8 +7,8 @@ services:
     container_name: meiyume_ai_assistant_db_dev
     environment:
       POSTGRES_DB: meiyume_ai_assistant_dev
-      POSTGRES_USER: cad_user
-      POSTGRES_PASSWORD: cad_password_dev
+      POSTGRES_USER: meiyume_user
+      POSTGRES_PASSWORD: meiyume_password_dev
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5433:5432"
@@ -16,7 +16,7 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
 
   # Redis for Celery
   redis:
@@ -27,7 +27,7 @@ services:
     volumes:
       - redis_data_dev:/data
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
 
   # Django Backend
   django:
@@ -37,7 +37,7 @@ services:
     container_name: meiyume_ai_assistant_django_dev
     environment:
       - DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.development
-      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/meiyume_ai_assistant_dev
+      - DATABASE_URL=postgresql://meiyume_user:meiyume_password_dev@db:5432/meiyume_ai_assistant_dev
       - REDIS_URL=redis://redis:6379/0
       - N8N_WEBHOOK_URL=https://meiyume.app.n8n.cloud/webhook/fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e
     ports:
@@ -50,7 +50,7 @@ services:
       - db
       - redis
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
@@ -72,7 +72,7 @@ services:
     depends_on:
       - django
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     command: streamlit run main.py --server.address 0.0.0.0 --server.fileWatcherType poll --server.runOnSave true
 
   # n8n Workflow Engine
@@ -93,7 +93,7 @@ services:
     volumes:
       - n8n_data_dev:/home/node/.n8n
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
 
   # Celery Worker (for background tasks)
   celery:
@@ -103,7 +103,7 @@ services:
     container_name: meiyume_ai_assistant_celery_dev
     environment:
       - DJANGO_SETTINGS_MODULE=meiyume_ai_assistant.settings.development
-      - DATABASE_URL=postgresql://cad_user:cad_password_dev@db:5432/meiyume_ai_assistant_dev
+      - DATABASE_URL=postgresql://meiyume_user:meiyume_password_dev@db:5432/meiyume_ai_assistant_dev
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend:/app
@@ -112,7 +112,7 @@ services:
       - db
       - redis
     networks:
-      - cad_analyzer_network
+      - meiyume_ai_assistant_network
     command: celery -A meiyume_ai_assistant worker -l info
 
 volumes:
