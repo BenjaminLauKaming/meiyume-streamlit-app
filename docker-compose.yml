@@ -67,8 +67,8 @@ services:
     ports:
       - "8501:8501"
     volumes:
-      - ./streamlit_app:/app
-      - ./streamlit_app/.streamlit:/app/.streamlit
+      - ./frontend:/app
+      - ./frontend/.streamlit:/app/.streamlit
     depends_on:
       - django
     networks:

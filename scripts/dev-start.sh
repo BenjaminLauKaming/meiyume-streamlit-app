@@ -51,6 +51,36 @@ else:
     print('Superuser already exists')
 "
 
+# Start ngrok for external access
+echo "🌐 Starting ngrok tunnel..."
+if command -v ngrok >/dev/null 2>&1; then
+    # Kill any existing ngrok processes
+    pkill -f ngrok || true
+    
+    # Start ngrok in background
+    ngrok http 8000 > /dev/null 2>&1 &
+    NGROK_PID=$!
+    
+    # Wait for ngrok to start
+    sleep 3
+    
+    # Get ngrok URL
+    NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data['tunnels'][0]['public_url'])
+except:
+    print('Failed to get ngrok URL')
+")
+    
+    echo "✅ ngrok tunnel started (PID: $NGROK_PID)"
+    echo "🌐 Public URL: $NGROK_URL"
+else
+    echo "⚠️  ngrok not found. Install with: brew install ngrok"
+    echo "   Or download from: https://ngrok.com/download"
+fi
+
 # Show running services
 echo "✅ Development environment is ready!"
 echo ""
@@ -61,6 +91,12 @@ echo "   • Django Admin: http://localhost:8000/admin (admin/admin123)"
 echo "   • n8n Workflows: http://localhost:5678 (admin/admin123)"
 echo "   • PostgreSQL: localhost:5432"
 echo "   • Redis: localhost:6379"
+echo "   • ngrok Dashboard: http://localhost:4040"
+if [ ! -z "$NGROK_URL" ]; then
+    echo "   • Public API: $NGROK_URL"
+    echo "   • Webhook URL: $NGROK_URL/api/cad/webhook/n8n-callback/"
+fi
 echo ""
 echo "📊 To view logs: docker-compose logs -f [service_name]"
-echo "🛑 To stop: docker-compose down" 
+echo "🛑 To stop: docker-compose down"
+echo "🔄 To restart ngrok: pkill -f ngrok && ngrok http 8000" 

@@ -20,7 +20,7 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Streamlit app
-COPY streamlit_app/ /app/
+COPY frontend/ /app/
 
 # Make port 8501 available
 EXPOSE 8501

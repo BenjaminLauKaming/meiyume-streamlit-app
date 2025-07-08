@@ -12,6 +12,11 @@ from datetime import timedelta
 
 from .models import UserPreferences, ProcessingLog
 from .serializers import UserPreferencesSerializer
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+    from rest_framework.request import Request
 
 class UserPreferencesView(generics.RetrieveUpdateAPIView):
     """View for managing user preferences"""

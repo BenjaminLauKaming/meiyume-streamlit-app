@@ -2787,3 +2787,475 @@ WARNING 2025-07-02 02:18:19,039 basehttp 10 281472795734432 "GET /favicon.ico HT
 WARNING 2025-07-02 02:18:19,166 log 10 281472672002464 Not Found: /apple-touch-icon.png
 WARNING 2025-07-02 02:18:19,167 basehttp 10 281472672002464 "GET /apple-touch-icon.png HTTP/1.1" 404 179
 INFO 2025-07-02 02:37:04,662 autoreload 10 281472889983008 /app/manage.py changed, reloading.
+INFO 2025-07-02 06:37:48,702 autoreload 9 281473122906144 Watching for file changes with StatReloader
+INFO 2025-07-02 06:49:49,091 autoreload 9 281473122906144 /app/meiyume_core/urls.py changed, reloading.
+INFO 2025-07-02 06:49:49,800 autoreload 17 281473223790624 Watching for file changes with StatReloader
+INFO 2025-07-02 06:50:22,600 autoreload 17 281473223790624 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 06:50:23,212 autoreload 19 281473065680928 Watching for file changes with StatReloader
+WARNING 2025-07-02 06:51:52,401 log 19 281472978186656 Unauthorized: /api/uploads/
+WARNING 2025-07-02 06:51:52,403 basehttp 19 281472978186656 "GET /api/uploads/ HTTP/1.1" 401 58
+WARNING 2025-07-02 06:52:55,404 log 19 281472978186656 Unauthorized: /api/token/
+WARNING 2025-07-02 06:52:55,405 basehttp 19 281472978186656 "POST /api/token/ HTTP/1.1" 401 63
+WARNING 2025-07-02 06:52:57,725 log 19 281472978186656 Unauthorized: /api/token/
+WARNING 2025-07-02 06:52:57,726 basehttp 19 281472978186656 "POST /api/token/ HTTP/1.1" 401 63
+INFO 2025-07-02 06:53:42,609 autoreload 69897 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 06:53:43,455 autoreload 19 281473065680928 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 06:53:44,210 autoreload 24 281473698623520 Watching for file changes with StatReloader
+INFO 2025-07-02 06:53:49,589 autoreload 71401 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 06:53:50,418 autoreload 24 281473698623520 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 06:53:51,079 autoreload 26 281473155412000 Watching for file changes with StatReloader
+INFO 2025-07-02 06:53:56,189 autoreload 71446 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 06:53:56,252 autoreload 26 281473155412000 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 06:53:56,480 autoreload 71475 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 06:53:56,854 autoreload 28 281473714274336 Watching for file changes with StatReloader
+INFO 2025-07-02 06:54:04,099 autoreload 28 281473714274336 /app/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 06:54:04,800 autoreload 30 281473030418464 Watching for file changes with StatReloader
+assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 06:54:05,201 autoreload 71513 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 06:54:50,368 autoreload 71513 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 06:54:50,848 autoreload 30 281473030418464 /app/meiyume_core/urls.py changed, reloading.
+INFO 2025-07-02 06:54:51,081 autoreload 71701 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 06:54:51,754 autoreload 32 281473319043104 Watching for file changes with StatReloader
+WARNING 2025-07-02 07:04:45,980 log 32 281473162736032 Unauthorized: /api/token/
+WARNING 2025-07-02 07:04:45,982 basehttp 32 281473162736032 "POST /api/token/ HTTP/1.1" 401 63
+WARNING 2025-07-02 07:05:26,986 log 32 281473162736032 Unauthorized: /api/token/
+WARNING 2025-07-02 07:05:26,988 basehttp 32 281473162736032 "POST /api/token/ HTTP/1.1" 401 63
+WARNING 2025-07-02 07:05:29,388 log 32 281473162736032 Unauthorized: /api/token/
+WARNING 2025-07-02 07:05:29,389 basehttp 32 281473162736032 "POST /api/token/ HTTP/1.1" 401 63
+INFO 2025-07-02 07:06:36,880 basehttp 32 281473162736032 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 07:06:47,912 basehttp 32 281473162736032 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 07:06:47,956 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:06:47,965 log 32 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:06:47,965 basehttp 32 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:06:52,415 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:06:54,874 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:07:04,050 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:07:04,871 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:07:05,454 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:07:12,741 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:07:13,556 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:07:17,277 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:07:17,281 log 32 281473162736032 Unauthorized: /api/dashboard/stats/
+WARNING 2025-07-02 07:07:17,282 basehttp 32 281473162736032 "GET /api/dashboard/stats/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:07:19,531 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:07:19,539 log 32 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:07:19,540 basehttp 32 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:07:47,356 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:07:47,362 log 32 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:07:47,363 basehttp 32 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:07:56,864 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:07:56,887 log 32 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:07:56,889 basehttp 32 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:09:35,488 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:09:37,308 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:09:38,464 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:09:41,220 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:09:48,966 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:09:55,336 basehttp 32 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:15:25,361 autoreload 32 281473319043104 /app/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 07:15:25,714 autoreload 71701 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 07:15:26,111 autoreload 74 281473424080928 Watching for file changes with StatReloader
+INFO 2025-07-02 07:15:30,271 autoreload 74 281473424080928 /app/assistants/cad/__init__.py changed, reloading.
+INFO 2025-07-02 07:15:30,392 autoreload 77812 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/__init__.py changed, reloading.
+INFO 2025-07-02 07:15:30,671 autoreload 77847 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 07:15:30,878 autoreload 76 281473321738272 Watching for file changes with StatReloader
+INFO 2025-07-02 07:27:06,496 autoreload 77847 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/__init__.py changed, reloading.
+INFO 2025-07-02 07:27:07,330 autoreload 76 281473321738272 /app/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 07:27:08,270 autoreload 78 281473658810400 Watching for file changes with StatReloader
+INFO 2025-07-02 07:27:57,396 autoreload 78 281473658810400 /app/meiyume_core/views.py changed, reloading.
+yume_core/views.py changed, reloading.
+INFO 2025-07-02 07:27:57,896 autoreload 81208 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 07:27:58,089 autoreload 80 281473016852512 Watching for file changes with StatReloader
+INFO 2025-07-02 07:28:01,114 autoreload 81208 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 07:28:01,337 autoreload 80 281473016852512 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 07:28:01,418 autoreload 81234 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 07:28:01,914 autoreload 82 281473672511520 Watching for file changes with StatReloader
+INFO 2025-07-02 07:28:27,582 autoreload 82 281473672511520 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 07:28:28,200 autoreload 84 281473151451168 Watching for file changes with StatReloader
+meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 07:29:20,394 autoreload 84 281473151451168 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 07:29:20,999 autoreload 86 281473726382112 Watching for file changes with StatReloader
+INFO 2025-07-02 07:29:21,137 autoreload 81336 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/meiyume_core/views.py changed, reloading.
+INFO 2025-07-02 07:29:21,641 autoreload 81661 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 07:32:05,006 autoreload 10 281473327902752 Watching for file changes with StatReloader
+WARNING 2025-07-02 07:32:19,145 log 10 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:32:19,146 basehttp 10 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+WARNING 2025-07-02 07:32:23,975 log 10 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:32:23,977 basehttp 10 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:32:28,040 basehttp 10 281473162736032 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 07:33:42,203 basehttp 10 281473162736032 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 07:33:42,251 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:33:42,258 log 10 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:33:42,258 basehttp 10 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:33:53,669 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:33:56,715 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:33:59,943 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:34:04,397 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:34:04,406 log 10 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:34:04,407 basehttp 10 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:34:16,801 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:34:19,786 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:34:32,898 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:34:35,242 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:34:35,264 log 10 281473162736032 Not Found: /api/uploads/
+WARNING 2025-07-02 07:34:35,266 basehttp 10 281473162736032 "POST /api/uploads/ HTTP/1.1" 404 179
+INFO 2025-07-02 07:35:23,274 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:35:52,152 basehttp 10 281473162736032 "GET /api/cad/uploads/ HTTP/1.1" 200 52
+INFO 2025-07-02 07:36:14,828 basehttp 10 281473162736032 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 07:36:14,848 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 07:36:14,852 log 10 281473162736032 Unauthorized: /api/health/
+WARNING 2025-07-02 07:36:14,852 basehttp 10 281473162736032 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 07:36:16,883 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:36:22,291 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:36:24,211 basehttp 10 281473162736032 "POST /api/token/verify/ HTTP/1.1" 200 2
+ERROR 2025-07-02 07:36:24,271 log 10 281473162736032 Internal Server Error: /api/cad/uploads/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "cad_cadanalysisoptions_upload_id_key"
+DETAIL:  Key (upload_id)=(5e968ab4-c03d-4119-b232-889c0f373792) already exists.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/decorators/csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/views/generic/base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/generics.py", line 242, in post
+    return self.create(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/rest_framework/mixins.py", line 19, in create
+    self.perform_create(serializer)
+  File "/app/assistants/cad/views.py", line 45, in perform_create
+    CADAnalysisOptions.objects.create(upload=cad_upload)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 658, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 814, in save
+    self.save_base(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 877, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1020, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1061, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1805, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1822, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 84, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "cad_cadanalysisoptions_upload_id_key"
+DETAIL:  Key (upload_id)=(5e968ab4-c03d-4119-b232-889c0f373792) already exists.
+
+ERROR 2025-07-02 07:36:24,283 basehttp 10 281473162736032 "POST /api/cad/uploads/ HTTP/1.1" 500 145
+INFO 2025-07-02 07:37:04,180 autoreload 10 281473327902752 /app/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 07:37:04,864 autoreload 37 281473209298976 Watching for file changes with StatReloader
+INFO 2025-07-02 07:37:05,010 autoreload 81661 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 07:37:05,484 autoreload 84848 8493293312 Watching for file changes with StatReloader
+INFO 2025-07-02 07:39:33,774 autoreload 10 281473290616864 Watching for file changes with StatReloader
+INFO 2025-07-02 07:39:48,772 basehttp 10 281473202581920 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:39:51,441 basehttp 10 281473202581920 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+INFO 2025-07-02 07:40:51,659 basehttp 10 281473202581920 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:40:55,715 basehttp 10 281473202581920 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:41:23,972 basehttp 10 281473202581920 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:41:25,878 basehttp 10 281473202581920 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 07:41:28,127 basehttp 10 281473202581920 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+INFO 2025-07-02 08:01:14,931 autoreload 84848 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 08:01:15,029 autoreload 10 281473290616864 /app/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 08:01:15,819 autoreload 19 281473809969184 Watching for file changes with StatReloader
+INFO 2025-07-02 08:03:00,637 basehttp 19 281473722675616 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:03:03,265 basehttp 19 281473722675616 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+WARNING 2025-07-02 08:03:07,162 log 19 281473722675616 Unauthorized: /api/health/
+WARNING 2025-07-02 08:03:07,163 basehttp 19 281473722675616 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:07:16,589 basehttp 19 281473722675616 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:07:20,394 basehttp 19 281473722675616 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+WARNING 2025-07-02 08:09:55,119 log 19 281473722675616 Not Found: /api/webhook/n8n-callback/
+WARNING 2025-07-02 08:09:55,121 basehttp 19 281473722675616 "POST /api/webhook/n8n-callback/ HTTP/1.1" 404 179
+WARNING 2025-07-02 08:10:51,853 log 19 281473632498080 Not Found: /api/webhook/n8n-callback/
+WARNING 2025-07-02 08:10:51,855 basehttp 19 281473632498080 "GET /api/webhook/n8n-callback/ HTTP/1.1" 404 179
+WARNING 2025-07-02 08:10:58,690 log 19 281473622012320 Unauthorized: /api/cad/webhook/n8n-callback/
+WARNING 2025-07-02 08:10:58,693 basehttp 19 281473622012320 "POST /api/cad/webhook/n8n-callback/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:11:23,347 basehttp 19 281473611526560 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:11:25,901 basehttp 19 281473611526560 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+WARNING 2025-07-02 08:13:12,899 log 19 281473622012320 Unauthorized: /api/cad/webhook/n8n-callback/
+WARNING 2025-07-02 08:13:12,902 basehttp 19 281473622012320 "POST /api/cad/webhook/n8n-callback/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:14:45,000 autoreload 19 281473809969184 /app/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 08:14:45,161 autoreload 89333 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 08:14:45,920 autoreload 32 281473557876768 Watching for file changes with StatReloader
+INFO 2025-07-02 08:15:10,885 autoreload 10 281473821405216 Watching for file changes with StatReloader
+WARNING 2025-07-02 08:15:20,658 log 10 281473733161376 Forbidden: /api/cad/webhook/n8n-callback/
+WARNING 2025-07-02 08:15:20,659 basehttp 10 281473733161376 "POST /api/cad/webhook/n8n-callback/ HTTP/1.1" 403 34
+INFO 2025-07-02 08:18:50,334 autoreload 94488 8493293312 /Users/kaming/Desktop/Meiyume_project/backend/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 08:18:50,846 autoreload 10 281473821405216 /app/assistants/cad/views.py changed, reloading.
+INFO 2025-07-02 08:18:51,452 autoreload 13 281472990302240 Watching for file changes with StatReloader
+INFO 2025-07-02 08:20:15,018 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:20:17,769 basehttp 13 281472827191712 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+INFO 2025-07-02 08:22:02,126 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:22:04,514 basehttp 13 281472827191712 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+WARNING 2025-07-02 08:23:27,131 log 13 281472827191712 Not Found: /api/cad/webhook/n8n-callback/
+WARNING 2025-07-02 08:23:27,133 basehttp 13 281472827191712 "POST /api/cad/webhook/n8n-callback/ HTTP/1.1" 404 28
+INFO 2025-07-02 08:32:13,456 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:32:16,014 basehttp 13 281472827191712 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+INFO 2025-07-02 08:34:01,251 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:34:03,800 basehttp 13 281472827191712 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+INFO 2025-07-02 08:35:38,691 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:35:41,072 basehttp 13 281472827191712 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+ERROR 2025-07-02 08:37:33,579 log 13 281472827191712 Internal Server Error: /api/cad/webhook/n8n-callback/
+ERROR 2025-07-02 08:37:33,581 basehttp 13 281472827191712 "POST /api/cad/webhook/n8n-callback/ HTTP/1.1" 500 43
+INFO 2025-07-02 08:40:56,919 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:40:59,507 basehttp 13 281472827191712 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+INFO 2025-07-02 08:42:02,443 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:42:05,153 basehttp 13 281472827191712 "POST /api/cad/uploads/ HTTP/1.1" 201 64
+INFO 2025-07-02 08:42:53,895 basehttp 13 281472827191712 "POST /api/cad/webhook/n8n-callback/ HTTP/1.1" 200 20
+INFO 2025-07-02 08:49:45,068 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 08:49:45,097 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 08:49:45,102 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 08:49:45,103 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:49:47,432 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:49:47,479 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 08:49:47,488 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 08:49:47,489 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:49:50,966 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:49:51,006 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 08:49:51,012 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 08:49:51,013 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:50:03,560 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:50:03,600 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 08:50:03,608 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 08:50:03,609 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:50:10,157 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:50:10,221 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 08:50:10,226 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 08:50:10,227 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 08:50:12,550 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:56:40,096 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:57:41,182 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:57:46,427 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:57:58,489 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 08:58:34,383 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:00:50,629 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:00:57,303 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:01:07,028 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:01:07,341 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:01:43,966 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:01:44,174 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:01:44,204 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:01:44,205 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:01:45,679 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:02:48,931 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:02:59,407 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:03:02,848 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:03:04,375 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:03:07,328 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:12:26,932 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:12:27,204 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:12:34,999 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:12:53,304 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:12:53,336 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:12:53,341 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:12:53,341 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:12:56,163 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:12:58,294 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:19:49,260 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:20:04,424 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:20:06,886 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:20:06,908 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:20:06,912 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:20:06,912 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:20:10,095 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:20:16,110 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:20:16,142 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:20:16,147 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:20:16,147 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:20:17,862 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:24:58,626 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:24:58,655 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:24:58,665 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:24:58,665 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:25:00,801 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:25:03,284 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:26:29,957 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:28:31,208 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:28:42,413 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:29:01,239 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:29:01,423 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:29:28,157 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:29:28,181 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:29:28,188 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:29:28,189 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:29:30,048 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:30:35,602 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:30:43,719 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:30:47,351 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:30:47,377 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:30:47,385 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:30:47,386 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:30:50,166 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:30:50,181 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:30:50,182 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:30:51,732 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:30:55,431 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-02 09:31:06,823 basehttp 13 281472827191712 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-02 09:31:06,849 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-02 09:31:06,853 log 13 281472827191712 Unauthorized: /api/health/
+WARNING 2025-07-02 09:31:06,854 basehttp 13 281472827191712 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-02 09:31:08,989 basehttp 13 281472827191712 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:25:45,093 autoreload 10 281472978083872 Watching for file changes with StatReloader
+INFO 2025-07-03 02:41:31,357 autoreload 9 281473786777632 Watching for file changes with StatReloader
+INFO 2025-07-03 02:42:56,624 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 02:42:56,644 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 02:42:56,648 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 02:42:56,648 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 02:42:58,896 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:43:08,283 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:46:13,856 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:46:44,321 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 02:46:44,342 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 02:46:44,349 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 02:46:44,350 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 02:46:46,374 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:47:16,445 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:47:27,338 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:47:28,835 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:47:35,528 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:59:32,555 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 02:59:32,648 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:00:21,234 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:00:21,487 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:02:35,401 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:03:28,575 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:04:51,364 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:05:35,544 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 03:05:35,569 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 03:05:35,577 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 03:05:35,580 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 03:05:37,932 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:05:40,967 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:07:24,699 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 03:07:24,749 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 03:07:24,753 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 03:07:24,754 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 03:07:26,581 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:08:16,235 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:08:22,472 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 03:08:22,493 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 03:08:22,498 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 03:08:22,500 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 03:08:24,220 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:08:31,931 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:08:52,197 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:08:58,041 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:11:17,661 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:11:36,196 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 03:11:36,221 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 03:11:36,225 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 03:11:36,226 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 03:11:38,222 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:11:54,170 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 03:11:54,190 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 03:11:54,194 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 03:11:54,194 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 03:11:56,411 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:13:31,445 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:13:59,113 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:14:09,089 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:14:17,209 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:14:23,975 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:14:37,288 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 03:14:37,314 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 03:14:37,318 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 03:14:37,319 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 03:14:40,027 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:15:06,984 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:16:31,477 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:16:33,367 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:17:22,474 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:17:27,924 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:20:27,628 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:20:52,104 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:21:17,952 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 03:21:17,977 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 03:21:17,981 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 03:21:17,981 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 03:21:19,582 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:21:27,089 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:21:32,744 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:21:33,781 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:21:43,678 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:21:46,984 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:23:36,898 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:23:38,821 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:23:50,493 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:24:42,378 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 03:24:54,684 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 04:14:48,958 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 04:14:50,436 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 05:58:42,891 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 05:58:48,132 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 05:58:48,161 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 05:58:48,169 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 05:58:48,170 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 05:58:51,867 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 05:58:57,906 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:00:02,106 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:00:05,333 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:02:14,128 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:02:15,885 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:08:02,294 basehttp 9 281473632498080 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-07-03 06:08:02,334 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-07-03 06:08:02,344 log 9 281473632498080 Unauthorized: /api/health/
+WARNING 2025-07-03 06:08:02,345 basehttp 9 281473632498080 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-07-03 06:08:04,661 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:08:06,490 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:08:35,663 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:08:45,891 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:08:47,937 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:09:10,783 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:09:14,045 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:09:14,854 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 06:59:11,816 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 07:01:27,453 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 07:01:28,824 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-07-03 07:01:31,557 basehttp 9 281473632498080 "POST /api/token/verify/ HTTP/1.1" 200 2

@@ -41,7 +41,7 @@ backend/
 
 #### Frontend Structure
 ```
-streamlit_app/
+frontend/
 ├── main.py              # Multi-assistant interface with sidebar navigation
 ├── engAssistant.py      # CAD Analysis Assistant (existing)
 ├── qualityAssistant.py  # Quality Assistant (placeholder)

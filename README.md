@@ -164,7 +164,7 @@ Meiyume_project/
 │       ├── urls.py             # Main URL configuration
 │       ├── wsgi.py             # WSGI configuration
 │       └── asgi.py             # ASGI configuration
-├── streamlit_app/              # Streamlit frontend
+├── frontend/                   # Streamlit frontend
 │   ├── main.py                # Multi-assistant interface
 │   ├── engAssistant.py        # CAD Analysis Assistant
 │   ├── qualityAssistant.py    # Quality Assistant (placeholder)

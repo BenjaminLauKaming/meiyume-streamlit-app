@@ -1,0 +1,22 @@
+{
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/migrations",
+    "**/staticfiles",
+    "**/media"
+  ],
+  "ignore": [
+    "**/migrations/**"
+  ],
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportAttributeAccessIssue": false,
+  "reportUnknownMemberType": false,
+  "pythonVersion": "3.9",
+  "typeCheckingMode": "basic",
+  "stubPath": "."
+} 

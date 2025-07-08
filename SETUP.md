@@ -90,7 +90,7 @@ Meiyume_project/
 │   │   ├── urls.py
 │   │   └── wsgi.py
 │   └── cad_core/               # Main application
-├── streamlit_app/              # Frontend application
+├── frontend/                   # Frontend application
 ├── docker/                     # Docker configurations
 │   ├── django/                 # Django containers
 │   ├── streamlit/              # Streamlit containers

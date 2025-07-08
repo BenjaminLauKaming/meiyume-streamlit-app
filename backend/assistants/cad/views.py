@@ -4,12 +4,14 @@ Views for CAD assistant
 
 import json
 import logging
+from typing import Type
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
+from django.db import models
 
 from .models import CADUpload, CADAnalysisOptions, CADAnalysisResult
 from .serializers import (
@@ -39,8 +41,8 @@ class CADUploadListCreateView(generics.ListCreateAPIView):
         """Create upload and trigger n8n processing"""
         cad_upload = serializer.save()
         
-        # Create default analysis options
-        CADAnalysisOptions.objects.create(upload=cad_upload)
+        # Create default analysis options (use get_or_create to avoid duplicates)
+        CADAnalysisOptions.objects.get_or_create(upload=cad_upload)
         
         # Send to n8n for processing
         try:
@@ -102,6 +104,9 @@ class CADAnalysisOptionsView(generics.RetrieveUpdateAPIView):
 class N8nWebhookCallbackView(generics.GenericAPIView):
     """View for handling n8n webhook callbacks"""
     
+    permission_classes = []  # No authentication required for webhooks
+    authentication_classes = []  # No authentication required for webhooks
+    
     def post(self, request, *args, **kwargs):
         """Handle n8n webhook callback"""
         try:
@@ -149,7 +154,7 @@ class N8nWebhookCallbackView(generics.GenericAPIView):
             logger.error(f"Error processing n8n webhook: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def _process_analysis_results(self, cad_upload, results_data):
+    def _process_analysis_results(self, cad_upload: CADUpload, results_data: dict):
         """Process and store analysis results from n8n"""
         
         # Define result type mapping
