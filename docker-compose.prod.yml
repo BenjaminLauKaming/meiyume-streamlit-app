@@ -72,7 +72,7 @@ services:
 
   # n8n Workflow Engine - Production
   n8n:
-    image: n8nio/n8n:1.19.4
+    image: n8nio/n8n:latest
     container_name: meiyume_ai_assistant_n8n_prod
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true

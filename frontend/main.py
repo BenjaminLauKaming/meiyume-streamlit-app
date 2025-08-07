@@ -111,7 +111,7 @@ def main():
     # Page selection
     page = st.sidebar.selectbox(
         "Choose a Page",
-        ["🏠 Home", "📐 CAD Analysis", "🔍 Quality Assistant", "📝 Complaint Assistant"],
+        ["🏠 Home", "📐 CAD Analysis", "🔍 Quality Assistant", "🤖 Quality RAG Chat", "📝 Complaint Assistant"],
         help="Select the page you want to view"
     )
     
@@ -122,6 +122,8 @@ def main():
         show_cad_assistant()
     elif page == "🔍 Quality Assistant":
         show_quality_assistant()
+    elif page == "🤖 Quality RAG Chat":
+        show_quality_rag_chat()
     elif page == "📝 Complaint Assistant":
         show_complaint_assistant()
     
@@ -149,7 +151,7 @@ def render_login_page():
     st.markdown("---")
     st.markdown("## 🚀 Platform Features")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.markdown("""
@@ -170,6 +172,15 @@ def render_login_page():
         """)
     
     with col3:
+        st.markdown("""
+        ### 🤖 Quality RAG Chat
+        - AI-powered quality control chat
+        - Real-time Q&A on standards
+        - Best practices guidance
+        - Interactive knowledge base
+        """)
+    
+    with col4:
         st.markdown("""
         ### 📝 Complaint Assistant
         - Customer complaint analysis
@@ -245,6 +256,14 @@ def show_home_page():
         st.markdown("</div>", unsafe_allow_html=True)
         
         st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
+        st.markdown("### 🤖 Quality RAG Chat")
+        st.markdown("Chat with AI about quality control, testing protocols, standards, and best practices.")
+        if st.button("🤖 Start Quality Chat", key="home_quality_chat", use_container_width=True):
+            st.session_state.page = "🤖 Quality RAG Chat"
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
         st.markdown("### 📝 Complaint Assistant")
         st.markdown("Analyze and categorize customer complaints with AI-powered sentiment analysis.")
         if st.button("📝 View Complaint Assistant", key="home_complaint", use_container_width=True):
@@ -294,6 +313,11 @@ def show_quality_assistant():
     """Display Quality Assistant"""
     from qualityAssistant import quality_assistant
     quality_assistant()
+
+def show_quality_rag_chat():
+    """Display Quality RAG Chat Assistant"""
+    from qualityRagChat import quality_rag_chat
+    quality_rag_chat()
 
 def show_complaint_assistant():
     """Display Complaint Assistant"""
