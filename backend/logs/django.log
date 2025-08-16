@@ -5204,3 +5204,47 @@ INFO 2025-08-07 06:44:27,080 basehttp 9 281472873329056 "POST /api/token/verify/
 INFO 2025-08-07 06:44:27,118 basehttp 9 281472873329056 "POST /api/token/verify/ HTTP/1.1" 200 2
 INFO 2025-08-07 06:44:28,744 basehttp 9 281472873329056 "POST /api/token/verify/ HTTP/1.1" 200 2
 INFO 2025-08-07 06:44:28,785 basehttp 9 281472873329056 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-11 02:00:09,700 autoreload 9 281472967159840 Watching for file changes with StatReloader
+INFO 2025-08-11 08:52:58,242 autoreload 10 281473648799776 Watching for file changes with StatReloader
+INFO 2025-08-11 08:53:25,193 autoreload 10 281473753997344 Watching for file changes with StatReloader
+INFO 2025-08-11 08:53:42,882 basehttp 10 281473666052512 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-11 08:53:42,909 basehttp 10 281473666052512 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-08-11 08:53:42,913 log 10 281473666052512 Unauthorized: /api/health/
+WARNING 2025-08-11 08:53:42,916 basehttp 10 281473666052512 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-08-11 08:53:48,445 basehttp 10 281473666052512 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-11 08:53:49,857 basehttp 10 281473666052512 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-12 03:11:14,478 autoreload 10 281473753997344 /app/meiyume_ai_assistant/settings/base.py changed, reloading.
+INFO 2025-08-12 03:11:15,060 autoreload 29 281473267142688 Watching for file changes with StatReloader
+INFO 2025-08-12 03:11:37,557 autoreload 29 281473267142688 /app/meiyume_ai_assistant/settings/base.py changed, reloading.
+INFO 2025-08-12 03:11:38,132 autoreload 31 281473091944480 Watching for file changes with StatReloader
+INFO 2025-08-16 05:51:06,924 autoreload 10 281473458450464 Watching for file changes with StatReloader
+INFO 2025-08-16 05:58:25,218 autoreload 10 281473579626528 Watching for file changes with StatReloader
+INFO 2025-08-16 06:14:46,966 basehttp 10 281473487794592 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-16 06:14:47,015 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-08-16 06:14:47,020 log 10 281473487794592 Unauthorized: /api/health/
+WARNING 2025-08-16 06:14:47,021 basehttp 10 281473487794592 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-08-16 06:16:24,308 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-08-16 06:16:24,314 log 10 281473487794592 Unauthorized: /api/health/
+WARNING 2025-08-16 06:16:24,314 basehttp 10 281473487794592 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-08-16 06:17:31,358 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-08-16 06:17:31,366 log 10 281473487794592 Unauthorized: /api/health/
+WARNING 2025-08-16 06:17:31,366 basehttp 10 281473487794592 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-08-16 06:17:40,453 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:17:51,682 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:06,003 basehttp 10 281473487794592 "POST /api/token/ HTTP/1.1" 200 483
+INFO 2025-08-16 06:18:06,025 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+WARNING 2025-08-16 06:18:06,032 log 10 281473487794592 Unauthorized: /api/health/
+WARNING 2025-08-16 06:18:06,034 basehttp 10 281473487794592 "GET /api/health/ HTTP/1.1" 401 58
+INFO 2025-08-16 06:18:10,216 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:14,992 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:18,137 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:25,264 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:54,966 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:55,008 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:56,158 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:56,193 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:56,737 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:18:56,776 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:23:46,665 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:25:05,801 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2
+INFO 2025-08-16 06:27:45,323 basehttp 10 281473487794592 "POST /api/token/verify/ HTTP/1.1" 200 2

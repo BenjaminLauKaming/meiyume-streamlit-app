@@ -43,15 +43,7 @@ if 'user_info' not in st.session_state:
 # Custom CSS for better styling
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 3rem;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 2rem;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+
     .assistant-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 1.5rem;
@@ -90,8 +82,7 @@ def main():
         render_login_page()
         return
     
-    # Main header
-    st.markdown('<h1 class="main-header">🤖 Meiyume AI Assistant</h1>', unsafe_allow_html=True)
+
     
     # User info in sidebar
     st.sidebar.markdown(f"👋 Welcome, **{st.session_state.user_info.get('username', 'User')}**")
@@ -134,11 +125,11 @@ def main():
 
 def render_login_page():
     """Render the login page"""
-    st.markdown('<h1 class="main-header">🤖 Meiyume AI Assistant</h1>', unsafe_allow_html=True)
+ 
     
     # Welcome message
     st.markdown("""
-    <div style="text-align: center; margin: 2rem 0;">
+    <div style="text-align: center; margin: 0;">
         <h2>Welcome to Meiyume AI Assistant Platform</h2>
         <p>Your comprehensive AI-powered assistant for CAD analysis, quality control, and complaint management.</p>
     </div>
@@ -195,41 +186,7 @@ def show_home_page():
     st.markdown("## 🏠 Welcome to Meiyume AI Assistant")
     st.markdown("### Your AI-powered platform for engineering, quality, and customer service excellence")
     
-    # Quick stats
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(
-            label="📊 Total Projects",
-            value=len(st.session_state.upload_history),
-            delta="Active"
-        )
-    
-    with col2:
-        completed = len([h for h in st.session_state.upload_history if h.get('status') == 'completed'])
-        st.metric(
-            label="✅ Completed",
-            value=completed,
-            delta=f"{completed}/{len(st.session_state.upload_history)}" if st.session_state.upload_history else "0/0"
-        )
-    
-    with col3:
-        processing = len([h for h in st.session_state.upload_history if h.get('status') == 'processing'])
-        st.metric(
-            label="⏳ In Progress",
-            value=processing,
-            delta="Active"
-        )
-    
-    with col4:
-        today_uploads = len([h for h in st.session_state.upload_history 
-                           if time.time() - h.get('timestamp', 0) < 86400])
-        st.metric(
-            label="📅 Today",
-            value=today_uploads,
-            delta="New"
-        )
-    
+
     st.markdown("---")
     
     # Quick actions
