@@ -15,126 +15,6 @@ load_dotenv()
 # Configuration
 DJANGO_API_URL = os.getenv("DJANGO_API_URL", "http://localhost:8000")
 
-def generate_fake_cad_results():
-    """Generate realistic fake CAD analysis results"""
-    return {
-        "results": [
-            {
-                "result_type": "dimensions",
-                "raw_data": {
-                    "parts": [
-                        {
-                            "name": "Perfume Cap",
-                            "dimensions": [
-                                {"name": "Outer Diameter", "value": 24.5, "unit": "mm", "tolerance": "±0.1", "critical": True},
-                                {"name": "Inner Diameter", "value": 22.3, "unit": "mm", "tolerance": "±0.1", "critical": True},
-                                {"name": "Height", "value": 15.2, "unit": "mm", "tolerance": "±0.2", "critical": False},
-                                {"name": "Thread Pitch", "value": 1.5, "unit": "mm", "tolerance": "±0.05", "critical": True},
-                                {"name": "Wall Thickness", "value": 1.1, "unit": "mm", "tolerance": "±0.1", "critical": False}
-                            ]
-                        },
-                        {
-                            "name": "Spray Head",
-                            "dimensions": [
-                                {"name": "Nozzle Diameter", "value": 0.8, "unit": "mm", "tolerance": "±0.02", "critical": True},
-                                {"name": "Body Diameter", "value": 12.5, "unit": "mm", "tolerance": "±0.1", "critical": False},
-                                {"name": "Length", "value": 28.7, "unit": "mm", "tolerance": "±0.2", "critical": False},
-                                {"name": "Spring Travel", "value": 3.2, "unit": "mm", "tolerance": "±0.1", "critical": True},
-                                {"name": "Actuator Force", "value": 2.5, "unit": "N", "tolerance": "±0.3", "critical": True}
-                            ]
-                        },
-                        {
-                            "name": "Bottle Neck",
-                            "dimensions": [
-                                {"name": "External Thread Diameter", "value": 22.0, "unit": "mm", "tolerance": "±0.1", "critical": True},
-                                {"name": "Internal Diameter", "value": 18.5, "unit": "mm", "tolerance": "±0.1", "critical": False},
-                                {"name": "Thread Height", "value": 8.0, "unit": "mm", "tolerance": "±0.1", "critical": False},
-                                {"name": "Neck Height", "value": 25.0, "unit": "mm", "tolerance": "±0.2", "critical": False},
-                                {"name": "Shoulder Radius", "value": 5.0, "unit": "mm", "tolerance": "±0.2", "critical": False}
-                            ]
-                        }
-                    ],
-                    "contact_pairs": [
-                        {
-                            "part1": "Perfume Cap",
-                            "part2": "Bottle Neck", 
-                            "contact_type": "Thread Connection",
-                            "fit_status": "Good Fit",
-                            "clearance": 0.2,
-                            "unit": "mm"
-                        },
-                        {
-                            "part1": "Spray Head",
-                            "part2": "Bottle Neck",
-                            "contact_type": "Press Fit",
-                            "fit_status": "Tight Fit", 
-                            "clearance": -0.1,
-                            "unit": "mm"
-                        },
-                        {
-                            "part1": "Perfume Cap",
-                            "part2": "Spray Head",
-                            "contact_type": "Clearance Fit",
-                            "fit_status": "Good Fit",
-                            "clearance": 0.3,
-                            "unit": "mm"
-                        },
-                        {
-                            "part1": "Bottle Neck",
-                            "part2": "Perfume Cap",
-                            "contact_type": "Sealing Surface",
-                            "fit_status": "Perfect Fit",
-                            "clearance": 0.05,
-                            "unit": "mm"
-                        }
-                    ]
-                }
-            }
-        ]
-    }
-
-def simulate_workflow_processing():
-    """Simplified workflow simulation with just progress bar and status"""
-    steps = [
-        ("📤 Uploading file to Django backend...", 0.15),
-        ("⚙️ Django processing file and preparing for n8n...", 0.30),
-        ("🔄 Starting n8n workflow...", 0.45),
-        ("📡 Uploading file to Gemini AI...", 0.60),
-        ("🤖 Gemini AI analyzing CAD drawing...", 0.85),
-        ("📤 Sending results back to Django...", 1.0)
-    ]
-    
-    # Create containers
-    progress_bar = st.progress(0)
-    status_container = st.empty()
-    
-    # Simulate processing
-    for step_text, progress in steps:
-        status_container.info(step_text)
-        progress_bar.progress(progress)
-        time.sleep(0.8)  # Shorter delay
-    
-    # Final success message
-    status_container.success("✅ Analysis completed successfully!")
-    time.sleep(0.5)
-    
-    return generate_fake_cad_results()
-
-def run_demo_analysis(filename=None):
-    """Consolidated demo analysis function"""
-    st.markdown("---")
-    st.markdown("### 🧪 Running Demo Analysis...")
-    
-    if filename:
-        st.info(f"Processing: {filename}")
-    
-    # Run simulation
-    results = simulate_workflow_processing()
-    
-    st.markdown("---")
-    st.markdown("### 📊 Demo Analysis Results")
-    display_results_spreadsheet(results)
-
 def display_results_spreadsheet(results_data):
     """Display CAD analysis results in a beautiful spreadsheet format"""
     st.subheader("📈 Analysis Results - Spreadsheet View")
@@ -684,8 +564,6 @@ def engineering_assistant():
                         "extract_dimensions": extract_dimensions,
                         "extract_tolerances": extract_tolerances,
                         "analyze_part_relationships": part_relationships,
-                        "extract_material_specifications": material_analysis,
-                        "detect_assembly_components": assembly_info,
                         "ai_model_version": "gemini-2.5-flash" if ai_model == "Gemini 2.5 Flash (Default)" else "gemini-pro",
                         "confidence_threshold": accuracy_level / 5.0,  # Convert 1-5 scale to 0.2-1.0
                         "max_analysis_time": 300
@@ -758,15 +636,8 @@ def engineering_assistant():
                                 st.warning("Analysis is taking longer than expected. Check back later.")
         
         else:
-            # Show prominent testing options when no file is uploaded
-            st.info("👆 Upload a PDF file above to start analysis, or try the demo below!")
-            
-
-
-        
-            if st.button("🧪 Try Demo Analysis", type="primary", use_container_width=True, help="See how the CAD analysis works with sample data"):
-                run_demo_analysis()
-            
+            # Show message when no file is uploaded
+            st.info("👆 Upload a PDF file above to start analysis!")
         
     
     with col2:
@@ -868,110 +739,3 @@ def display_results(results):
                     file_name=f"analysis_results.{file_type}",
                     mime=f"application/{file_type}"
                 )
-
-def main():
-    st.set_page_config(
-        page_title="CAD Drawing Analysis Assistant",
-        page_icon="🛠️",
-        layout="wide"
-    )
-    
-    st.title("🛠️ CAD Drawing Analysis Assistant")
-    st.markdown("Upload CAD drawings (PDF) for dimensional analysis and part relationship detection.")
-    
-    # Main upload section
-    uploaded_file = st.file_uploader(
-        "📁 Choose a CAD drawing file (PDF)",
-        type=['pdf'],
-        help="Upload PDF files containing CAD drawings for analysis"
-    )
-    
-    # Always show processing options - with and without file
-    st.markdown("### 🚀 Processing Options")
-    
-    if uploaded_file is not None:
-        st.success(f"✅ File selected: {uploaded_file.name}")
-        st.info(f"📁 File size: {uploaded_file.size / 1024:.1f} KB")
-        
-        # Three columns when file is uploaded
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            if st.button("🚀 Analyze CAD Drawing", type="primary", use_container_width=True):
-                st.markdown("---")
-                st.markdown("### 📤 Processing Real Upload...")
-                
-                result = upload_file_with_progress(uploaded_file)
-                
-                if result:
-                    st.markdown("---")
-                    st.markdown("### 📊 Analysis Results")
-                    display_results_spreadsheet(result)
-                    
-        with col2:
-            if st.button("🧪 Demo with This File", type="secondary", use_container_width=True, help="Show how results would look with this filename but demo data"):
-                st.markdown("---")
-                st.markdown("### 🧪 Processing Simulation...")
-                
-                # Run simulation with same interface as real upload
-                results = simulate_workflow_processing()
-                
-                st.markdown("---")
-                st.markdown("### 📊 Analysis Results")
-                display_results_spreadsheet(results)
-                
-        with col3:
-            if st.button("🧪 Test Interface", type="secondary", use_container_width=True, help="See how the interface works with realistic test data"):
-                st.markdown("---")
-                st.markdown("### 🧪 Running Demo Analysis...")
-                
-                # Run simulation
-                results = simulate_workflow_processing()
-                
-                st.markdown("---")
-                st.markdown("### 📊 Demo Analysis Results")
-                display_results_spreadsheet(results)
-    
-    else:
-        # Show testing option prominently when no file is uploaded
-        st.info("👆 Upload a PDF file above, or try the demo below to see how the analysis works!")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("🧪 Try Demo Analysis", type="primary", use_container_width=True, help="See how the interface works with realistic test data"):
-                st.markdown("---")
-                st.markdown("### 🧪 Running Demo Analysis...")
-                
-                # Run simulation
-                results = simulate_workflow_processing()
-                
-                st.markdown("---")
-                st.markdown("### 📊 Demo Analysis Results")
-                display_results_spreadsheet(results)
-        
-        with col2:
-            st.markdown("**Demo includes:**")
-            st.markdown("- 📏 Dimension extraction")
-            st.markdown("- 🔗 Part relationship analysis")
-            st.markdown("- 📊 Interactive spreadsheet results")
-            st.markdown("- 🎯 Realistic CAD data simulation")
-    
-    # Help section
-    with st.expander("ℹ️ How to use this assistant"):
-        st.markdown("""
-        **Quick Start:**
-        1. **Try Demo First**: Click "🧪 Test Interface with Simulation" to see how it works
-        2. **Real Analysis**: Upload a PDF file and click "🚀 Analyze CAD Drawing"
-        3. **Demo with Your File**: Upload a file and click "🧪 Demo with This File" to see results format
-        
-        **Features:**
-        - 📏 Automatic dimension extraction from CAD drawings
-        - 🔗 Part relationship analysis and fit compatibility
-        - 📊 Interactive spreadsheet results with filtering
-        - 📥 Export to CSV, JSON formats
-        - 🎯 Beautiful visual summaries and metrics
-        """)
-
-if __name__ == "__main__":
-    main()
