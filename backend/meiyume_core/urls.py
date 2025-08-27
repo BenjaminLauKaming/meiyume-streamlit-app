@@ -8,6 +8,10 @@ from . import views
 app_name = 'meiyume_core'
 
 urlpatterns = [
+    # File upload and results
+    path('upload/', views.FileUploadView.as_view(), name='file-upload'),
+    path('upload/<str:pk>/', views.FileResultView.as_view(), name='file-result'),
+    
     # User preferences
     path('preferences/', views.UserPreferencesView.as_view(), name='user-preferences'),
     

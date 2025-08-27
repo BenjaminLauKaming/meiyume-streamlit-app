@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY', default="django-insecure-5u7f$!vm=0z^q-5cm7-bj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,958ee75f6848.ngrok-free.app', cast=lambda v: [s.strip() for s in v.split(',')])
 
 
 # Application definition
@@ -42,11 +42,15 @@ INSTALLED_APPS = [
     
     # Third party apps
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "storages",
     
     # Local apps
-    "cad_core",
+    "meiyume_core",
+    "assistants.cad",
+    "assistants.esg",
 ]
 
 MIDDLEWARE = [

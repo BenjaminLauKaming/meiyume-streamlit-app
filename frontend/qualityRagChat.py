@@ -38,7 +38,7 @@ def quality_rag_chat():
         st.session_state.suggested_question = ""
     
     # Quick info banner
-    st.info("💡 Ask questions about quality control, testing protocols, standards, and best practices. The AI will provide detailed answers based on quality control knowledge.")
+    st.info("💡 Ask questions about complaints. The AI will provide detailed answers based on complaints data.")
     
     # Chat interface
     st.markdown("---")
@@ -183,40 +183,7 @@ def quality_rag_chat():
     
     # Sidebar with chat controls and information
     with st.sidebar:
-        st.subheader("💬 Chat Controls")
-        
-        # Clear chat button
-        if st.button("🗑️ Clear Chat History", use_container_width=True):
-            st.session_state.chat_history = []
-            st.session_state.chat_id = f"chat_{int(time.time())}"
-            st.rerun()
-        
-        # Export chat button
-        if st.button("📥 Export Chat", use_container_width=True):
-            if st.session_state.chat_history:
-                # Serialize chat history for export
-                messages_serialized = []
-                for msg in st.session_state.chat_history:
-                    msg_copy = msg.copy()
-                    if 'timestamp' in msg_copy and isinstance(msg_copy['timestamp'], datetime):
-                        msg_copy['timestamp'] = msg_copy['timestamp'].isoformat()
-                    messages_serialized.append(msg_copy)
-                
-                chat_export = {
-                    "chat_id": st.session_state.chat_id,
-                    "timestamp": datetime.now().isoformat(),
-                    "messages": messages_serialized
-                }
-                st.download_button(
-                    label="📥 Download Chat JSON",
-                    data=json.dumps(chat_export, indent=2, default=serialize_datetime),
-                    file_name=f"quality_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
-                )
-        
-        st.markdown("---")
-        
-
+    
         
         # Suggested questions
         st.subheader("💡 Suggested Questions")

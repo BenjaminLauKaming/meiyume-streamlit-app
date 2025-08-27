@@ -5,9 +5,11 @@ import os
 import time
 import pandas as pd
 from datetime import datetime, timezone
-from io import BytesIO
+from io import BytesIO, StringIO
 from dotenv import load_dotenv
 from auth_utils import get_auth_headers
+import uuid
+import base64
 
 
 load_dotenv()
@@ -305,34 +307,26 @@ def display_results_spreadsheet(results_data):
             )
         
         st.info("💡 Tip: Use the CSV files to import data into Excel or other spreadsheet applications for further analysis.")
-UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/cad/uploads/"
-RESULTS_ENDPOINT = f"{DJANGO_API_URL}/api/cad/results/"
+UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/upload/"
+RESULTS_ENDPOINT = f"{DJANGO_API_URL}/api/upload/"
 
-def upload_file_to_django(file, metadata):
-    """Upload file to Django backend"""
+def upload_file_to_django(file, session_id):
+    """Upload file to Django backend which forwards to n8n webhook"""
     try:
-        files = {"file": (file.name, file.getvalue(), file.type)}
+        files = {"file": (file.name, file.getvalue(), file.type or "application/pdf")}
         data = {
-            "metadata": json.dumps(metadata),
-            "user_id": st.session_state.user_info.get("username", "anonymous")
+            "session_id": session_id
         }
-        
-        headers = get_auth_headers()
-        
         response = requests.post(
             UPLOAD_ENDPOINT,
             files=files,
             data=data,
-            headers=headers,
-            timeout=30
+            timeout=60
         )
-        
-        if response.status_code in [200, 201]:  # 200 = OK, 201 = Created
+        if response.status_code in [200, 201]:
             return response.json()
-        else:
-            st.error(f"Upload failed: {response.status_code} - {response.text}")
-            return None
-            
+        st.error(f"Upload failed: {response.status_code} - {response.text}")
+        return None
     except requests.exceptions.RequestException as e:
         st.error(f"Network error: {str(e)}")
         return None
@@ -343,152 +337,281 @@ def upload_file_to_django(file, metadata):
 def get_processing_status(task_id):
     """Check processing status from Django backend"""
     try:
-        headers = get_auth_headers()
-        
         response = requests.get(
             f"{RESULTS_ENDPOINT}{task_id}/",
-            headers=headers,
-            timeout=10
+            timeout=15
         )
-        
         if response.status_code == 200:
             return response.json()
-        else:
-            return None
-            
+        return None
     except requests.exceptions.RequestException:
         return None
 
-def upload_file_with_progress(uploaded_file):
-    """Upload file with progress display similar to simulation"""
+def upload_file_with_progress(uploaded_file, session_id):
+    """Upload file with progress and poll until results are available"""
     steps = [
-        ("📤 Uploading file to Django backend...", 0.20),
-        ("⚙️ Django processing file and preparing for n8n...", 0.40),
-        ("🔄 Starting n8n workflow...", 0.60),
-        ("📡 Processing with AI...", 0.80),
-        ("📊 Generating results...", 1.0)
+        ("📤 Uploading file...", 0.20),
+        ("📡 Sending to n8n workflow...", 0.40),
+        ("⚙️ Processing...", 0.70),
+        ("📊 Generating results...", 0.90),
+        ("✅ Finalizing...", 1.0)
     ]
-    
-    # Create containers
     progress_bar = st.progress(0)
     status_container = st.empty()
-    
     try:
-        # Step 1: Upload
         status_container.info(steps[0][0])
         progress_bar.progress(steps[0][1])
-        
-        files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-        data = {"assistant_type": "cad"}
-        
-        response = requests.post(
-            "http://localhost:8000/api/meiyume-core/upload/",
-            files=files,
-            data=data,
-            timeout=30
-        )
-        
-        if response.status_code != 200:
-            status_container.error(f"❌ Upload failed: {response.text}")
+        upload_resp = upload_file_to_django(uploaded_file, session_id)
+        if not upload_resp:
+            status_container.error("❌ Upload failed")
             return None
-            
-        upload_data = response.json()
-        upload_id = upload_data.get("id")
-        
-        # Step 2: Processing
+        task_id = upload_resp.get("task_id") or upload_resp.get("id")
+        if not task_id:
+            status_container.error("❌ No task id returned from server")
+            return None
         status_container.info(steps[1][0])
         progress_bar.progress(steps[1][1])
-        time.sleep(1)
-        
-        # Step 3: Workflow
-        status_container.info(steps[2][0])
-        progress_bar.progress(steps[2][1])
-        time.sleep(1)
-        
-        # Step 4: AI Processing
-        status_container.info(steps[3][0])
-        progress_bar.progress(steps[3][1])
-        
-        # Poll for results
-        max_attempts = 60
+        # Poll for results (up to 3 minutes)
+        max_attempts = 90  # 90 * 2s = 180s (3 minutes)
         for attempt in range(max_attempts):
             time.sleep(2)
-            
-            try:
-                result_response = requests.get(
-                    f"http://localhost:8000/api/meiyume-core/upload/{upload_id}/",
-                    timeout=10
-                )
-                
-                if result_response.status_code == 200:
-                    result_data = result_response.json()
-                    
-                    if result_data.get("status") == "completed":
-                        # Step 5: Complete
-                        status_container.info(steps[4][0])
-                        progress_bar.progress(steps[4][1])
-                        time.sleep(0.5)
-                        
-                        status_container.success("✅ Analysis completed successfully!")
-                        return result_data
-                        
-                    elif result_data.get("status") == "failed":
-                        status_container.error("❌ Processing failed")
-                        return None
-                        
-            except requests.RequestException:
+            result_data = get_processing_status(task_id)
+            if not result_data:
                 continue
-        
-        status_container.error("❌ Processing timeout")
+            status = result_data.get("status", "processing")
+            # surface backend status/message to help diagnose session matching
+            if result_data.get("message"):
+                status_container.info(result_data.get("message"))
+            if status == "completed":
+                # If backend provides a session_id, ensure it matches before finishing
+                backend_session_id = result_data.get("session_id")
+                if backend_session_id and backend_session_id != session_id:
+                    status_container.info("Results received for a different session. Waiting for this session_id...")
+                    continue
+                status_container.info(steps[4][0])
+                progress_bar.progress(steps[4][1])
+                time.sleep(0.3)
+                status_container.success("✅ Analysis completed successfully!")
+                return {"task_id": task_id, **result_data}
+            if status == "failed":
+                status_container.error("❌ Processing failed")
+                return None
+            # update progress if provided
+            progress = result_data.get("progress", 0)
+            if isinstance(progress, (int, float)):
+                progress_bar.progress(min(max(progress / 100.0, 0.0), 0.95))
+            else:
+                # show mid progress while waiting
+                progress_bar.progress(min(steps[2][1] + attempt * 0.002, 0.95))
+            status_container.info(f"⏳ Status: {status}")
+        status_container.error("❌ No results received within 3 minutes. Please try again or check the workflow.")
         return None
-        
     except Exception as e:
         status_container.error(f"❌ Error: {str(e)}")
         return None
+
+def display_base64_results(results_list, expected_session_id=None):
+    """Decode base64 CSV results and display as dataframes, filtering by session_id"""
+    if not isinstance(results_list, list) or not results_list:
+        st.info("No results to display")
+        return
+    # If expected_session_id provided, filter
+    if expected_session_id:
+        results_list = [r for r in results_list if isinstance(r, dict) and r.get('session_id') == expected_session_id]
+        if not results_list:
+            st.warning("Results received, waiting for this session_id")
+            return
+    result = results_list[0]
+    dim_df = None
+    match_df = None
+    try:
+        if isinstance(result.get('dimension'), str):
+            dim_csv = base64.b64decode(result['dimension']).decode('utf-8')
+            dim_df = pd.read_csv(StringIO(dim_csv))
+    except Exception as e:
+        st.error(f"Failed to decode dimension CSV: {e}")
+    try:
+        if isinstance(result.get('matching'), str):
+            match_csv = base64.b64decode(result['matching']).decode('utf-8')
+            match_df = pd.read_csv(StringIO(match_csv))
+    except Exception as e:
+        st.error(f"Failed to decode matching CSV: {e}")
+    tabs = st.tabs(["📏 Dimensions (CSV)", "🔗 Matching (CSV)"])
+    key_prefix = (expected_session_id or "default").replace("-", "_")
+    with tabs[0]:
+        if dim_df is not None:
+            # Normalize column names
+            dim_df = dim_df.copy()
+            dim_df.columns = [str(c).replace('\ufeff', '').strip() for c in dim_df.columns]
+            lower_cols = {c.lower(): c for c in dim_df.columns}
+            # Map common names to standard
+            rename_map = {}
+            if 'part name' in lower_cols:
+                rename_map[lower_cols['part name']] = 'part_name'
+            if 'part_name' in lower_cols:
+                rename_map[lower_cols['part_name']] = 'part_name'
+            if 'dimension_type' in lower_cols:
+                rename_map[lower_cols['dimension_type']] = 'dimension_type'
+            if 'feature' in lower_cols:
+                rename_map[lower_cols['feature']] = 'feature'
+            if 'unit' in lower_cols:
+                rename_map[lower_cols['unit']] = 'unit'
+            if 'value' in lower_cols:
+                rename_map[lower_cols['value']] = 'value'
+            if 'tolerance' in lower_cols:
+                rename_map[lower_cols['tolerance']] = 'tolerance'
+            dim_df = dim_df.rename(columns=rename_map)
+            # Ensure numeric value
+            if 'value' in dim_df.columns:
+                dim_df['value'] = pd.to_numeric(dim_df['value'], errors='coerce')
+
+            with st.expander("Filters and sorting", expanded=False):
+                cols = st.columns(3)
+                with cols[0]:
+                    parts = sorted([p for p in dim_df.get('part_name', pd.Series(dtype=str)).dropna().unique()]) if 'part_name' in dim_df.columns else []
+                    selected_parts = st.multiselect("Filter by Part", parts, key=f"dim_parts_{key_prefix}")
+                with cols[1]:
+                    dim_types = sorted([t for t in dim_df.get('dimension_type', pd.Series(dtype=str)).dropna().unique()]) if 'dimension_type' in dim_df.columns else []
+                    selected_types = st.multiselect("Dimension Type", dim_types, key=f"dim_types_{key_prefix}")
+                with cols[2]:
+                    feature_query = st.text_input("Feature contains", key=f"dim_feat_{key_prefix}")
+
+                if 'value' in dim_df.columns and dim_df['value'].notna().any():
+                    vmin = float(dim_df['value'].min())
+                    vmax = float(dim_df['value'].max())
+                    val_range = st.slider("Value range (mm)", min_value=vmin, max_value=vmax, value=(vmin, vmax), key=f"dim_val_{key_prefix}")
+                else:
+                    val_range = None
+
+                sort_col = st.selectbox("Sort by", options=list(dim_df.columns), key=f"dim_sort_{key_prefix}")
+                sort_asc = st.radio("Order", options=["Ascending", "Descending"], horizontal=True, key=f"dim_sort_order_{key_prefix}") == "Ascending"
+
+            filtered = dim_df
+            if selected_parts and 'part_name' in filtered.columns:
+                filtered = filtered[filtered['part_name'].isin(selected_parts)]
+            if selected_types and 'dimension_type' in filtered.columns:
+                filtered = filtered[filtered['dimension_type'].isin(selected_types)]
+            if feature_query and 'feature' in filtered.columns:
+                filtered = filtered[filtered['feature'].astype(str).str.contains(feature_query, case=False, na=False)]
+            if val_range and 'value' in filtered.columns:
+                filtered = filtered[(filtered['value'] >= val_range[0]) & (filtered['value'] <= val_range[1])]
+
+            if sort_col in filtered.columns:
+                filtered = filtered.sort_values(by=sort_col, ascending=sort_asc, kind='mergesort')
+
+            st.markdown(f"Showing {len(filtered)} of {len(dim_df)} rows")
+            st.dataframe(filtered, use_container_width=True, hide_index=True)
+        else:
+            st.info("No dimension data available")
+    with tabs[1]:
+        if match_df is not None:
+            # Normalize column names
+            match_df = match_df.copy()
+            match_df.columns = [str(c).replace('\ufeff', '').strip() for c in match_df.columns]
+            lower_cols_m = {c.lower(): c for c in match_df.columns}
+            rename_map_m = {}
+            for key in ['dimension_type','part_a','feature_a','value_a','part_b','feature_b','value_b','difference_mm','range_difference_mm']:
+                if key in lower_cols_m:
+                    rename_map_m[lower_cols_m[key]] = key
+            match_df = match_df.rename(columns=rename_map_m)
+            # Ensure numeric types
+            for col in ['value_a','value_b','difference_mm','range_difference_mm']:
+                if col in match_df.columns:
+                    match_df[col] = pd.to_numeric(match_df[col], errors='coerce')
+
+            with st.expander("Filters, sorting, and tolerance check", expanded=False):
+                cols = st.columns(3)
+                with cols[0]:
+                    m_types = sorted([t for t in match_df.get('dimension_type', pd.Series(dtype=str)).dropna().unique()]) if 'dimension_type' in match_df.columns else []
+                    sel_m_types = st.multiselect("Dimension Type", m_types, key=f"match_types_{key_prefix}")
+                with cols[1]:
+                    parts_a = sorted([p for p in match_df.get('part_a', pd.Series(dtype=str)).dropna().unique()]) if 'part_a' in match_df.columns else []
+                    sel_parts_a = st.multiselect("Part A", parts_a, key=f"match_part_a_{key_prefix}")
+                with cols[2]:
+                    parts_b = sorted([p for p in match_df.get('part_b', pd.Series(dtype=str)).dropna().unique()]) if 'part_b' in match_df.columns else []
+                    sel_parts_b = st.multiselect("Part B", parts_b, key=f"match_part_b_{key_prefix}")
+
+                feat_query = st.text_input("Feature contains (A or B)", key=f"match_feat_{key_prefix}")
+
+                if 'difference_mm' in match_df.columns and match_df['difference_mm'].notna().any():
+                    dmin = float(match_df['difference_mm'].min())
+                    dmax = float(match_df['difference_mm'].max())
+                    diff_range = st.slider("Difference range (mm)", min_value=dmin, max_value=dmax, value=(dmin, dmax), key=f"match_diff_{key_prefix}")
+                else:
+                    diff_range = None
+
+                st.markdown("Tolerance check thresholds")
+                colt1, colt2 = st.columns(2)
+                with colt1:
+                    tight_th = st.number_input("Tight fit ≤ (mm)", value=0.05, min_value=0.0, step=0.01, format="%.2f", key=f"tight_{key_prefix}")
+                with colt2:
+                    good_th = st.number_input("Good fit ≤ (mm)", value=0.20, min_value=0.0, step=0.01, format="%.2f", key=f"good_{key_prefix}")
+
+                sort_m_col = st.selectbox("Sort by", options=list(match_df.columns), key=f"match_sort_{key_prefix}")
+                sort_m_asc = st.radio("Order", options=["Ascending", "Descending"], horizontal=True, key=f"match_sort_order_{key_prefix}") == "Ascending"
+
+            m_filtered = match_df
+            if sel_m_types and 'dimension_type' in m_filtered.columns:
+                m_filtered = m_filtered[m_filtered['dimension_type'].isin(sel_m_types)]
+            if sel_parts_a and 'part_a' in m_filtered.columns:
+                m_filtered = m_filtered[m_filtered['part_a'].isin(sel_parts_a)]
+            if sel_parts_b and 'part_b' in m_filtered.columns:
+                m_filtered = m_filtered[m_filtered['part_b'].isin(sel_parts_b)]
+            if feat_query:
+                cond_a = (
+                    m_filtered['feature_a'].astype(str).str.contains(feat_query, case=False, na=False)
+                    if 'feature_a' in m_filtered.columns
+                    else pd.Series(False, index=m_filtered.index)
+                )
+                cond_b = (
+                    m_filtered['feature_b'].astype(str).str.contains(feat_query, case=False, na=False)
+                    if 'feature_b' in m_filtered.columns
+                    else pd.Series(False, index=m_filtered.index)
+                )
+                m_filtered = m_filtered[cond_a | cond_b]
+            if diff_range and 'difference_mm' in m_filtered.columns:
+                m_filtered = m_filtered[(m_filtered['difference_mm'] >= diff_range[0]) & (m_filtered['difference_mm'] <= diff_range[1])]
+
+            # Add fit status classification
+            def classify_fit(diff: float) -> str:
+                if pd.isna(diff):
+                    return 'Unknown'
+                if diff < 0:
+                    return 'Overlap/Interference'
+                if diff <= tight_th:
+                    return 'Tight fit'
+                if diff <= good_th:
+                    return 'Good fit'
+                return 'Loose fit'
+
+            if 'difference_mm' in m_filtered.columns:
+                m_filtered = m_filtered.copy()
+                m_filtered['fit_status'] = m_filtered['difference_mm'].apply(classify_fit)
+
+            if sort_m_col in m_filtered.columns:
+                m_filtered = m_filtered.sort_values(by=sort_m_col, ascending=sort_m_asc, kind='mergesort')
+
+            st.markdown(f"Showing {len(m_filtered)} of {len(match_df)} rows")
+            st.dataframe(m_filtered, use_container_width=True, hide_index=True)
+        else:
+            st.info("No matching data available")
 
 def engineering_assistant():
     """Engineering Assistant main interface"""
     st.title("⚙️ Engineering Assistant")
     st.markdown("### Advanced CAD Drawing Analysis with AI")
-    
+    st.caption(f"Backend API: {DJANGO_API_URL}")
 
+    # Persist results across reruns so filters don't clear the tables
+    if 'cad_results' not in st.session_state:
+        st.session_state.cad_results = None
+    if 'cad_session_id' not in st.session_state:
+        st.session_state.cad_session_id = None
     
-    # Quick stats at the top
-    col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
-        st.metric(
-            label="📊 Total Uploads",
-            value=len(st.session_state.upload_history)
-        )
     
-    with col2:
-        completed = len([h for h in st.session_state.upload_history if h.get('status') == 'completed'])
-        st.metric(
-            label="✅ Completed",
-            value=completed
-        )
-    
-    with col3:
-        processing = len([h for h in st.session_state.upload_history if h.get('status') == 'processing'])
-        st.metric(
-            label="⏳ Processing",
-            value=processing
-        )
-    
-    with col4:
-        today_uploads = len([h for h in st.session_state.upload_history 
-                           if time.time() - h.get('timestamp', 0) < 86400])
-        st.metric(
-            label="📅 Today",
-            value=today_uploads
-        )
-    
-    st.markdown("---")
-    
-    # Main content
-    col1, col2 = st.columns([2, 1])
-    
+    # Main content (single column)
+    col1 = st.container()
     with col1:
         st.subheader("📁 Upload CAD Drawing")
         
@@ -499,58 +622,18 @@ def engineering_assistant():
             help="Upload a 2D CAD drawing in PDF format"
         )
         
-        # Always show processing options
-        st.subheader("🚀 Processing Options")
-        
         if uploaded_file is not None:
             # Display file info
             st.success(f"File uploaded: {uploaded_file.name}")
             st.info(f"File size: {uploaded_file.size / 1024:.2f} KB")
             
-            # Metadata input
-            with st.expander("📋 Additional Information (Optional)"):
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    project_name = st.text_input("Project Name")
-                    drawing_number = st.text_input("Drawing Number")
-                with col_b:
-                    revision = st.text_input("Revision")
-                    priority = st.selectbox("Priority", ["Low", "Medium", "High", "Critical"])
-                notes = st.text_area("Notes")
+            # Minimal metadata defaults (optional fields removed per request)
+            project_name = ""
+            drawing_number = ""
+            revision = ""
+            priority = "Medium"
+            notes = ""
             
-            # Analysis options
-            st.subheader("⚙️ Analysis Options")
-            
-            col_x, col_y = st.columns(2)
-            with col_x:
-                extract_dimensions = st.checkbox("📏 Extract Dimensions", value=True)
-                extract_tolerances = st.checkbox("🎯 Extract Tolerances", value=True)
-  
-            
-            with col_y:
-                part_relationships = st.checkbox("🔗 Analyze Part Relationships", value=True)
-            
-            # Advanced options
-            with st.expander("🔧 Advanced Options"):
-                ai_model = st.selectbox(
-                    "AI Model",  
-                    ["Gemini 2.5 Flash (Default)", "Gemini Pro", "Custom Model"],
-                    help="Select the AI model for analysis"
-                )
-                
-                output_format = st.multiselect(
-                    "Output Formats",
-                    ["CSV", "Excel", "JSON", "PDF Report"],
-                    default=["CSV"]
-                )
-                
-                accuracy_level = st.slider(
-                    "Accuracy Level",
-                    min_value=1,
-                    max_value=5,
-                    value=3,
-                    help="Higher accuracy takes longer but provides better results"
-                )
             
             # Single analysis button when file is uploaded
             if st.button("🚀 Start Analysis", type="primary", use_container_width=True):
@@ -559,183 +642,44 @@ def engineering_assistant():
                     "drawing_number": drawing_number,
                     "revision": revision,
                     "priority": priority,
-                    "notes": notes,
-                    "analysis_options": {
-                        "extract_dimensions": extract_dimensions,
-                        "extract_tolerances": extract_tolerances,
-                        "analyze_part_relationships": part_relationships,
-                        "ai_model_version": "gemini-2.5-flash" if ai_model == "Gemini 2.5 Flash (Default)" else "gemini-pro",
-                        "confidence_threshold": accuracy_level / 5.0,  # Convert 1-5 scale to 0.2-1.0
-                        "max_analysis_time": 300
-                    }
+                    "notes": notes
                 }
                 
                 with st.spinner("Uploading file and starting analysis..."):
-                    result = upload_file_with_progress(uploaded_file)
-                    
+                    # Generate a fresh session_id per upload and keep for matching
+                    session_id = str(uuid.uuid4())
+                    st.info(f"Tracking session: {session_id}")
+                    result = upload_file_with_progress(uploaded_file, session_id)
                     if result:
                         st.success("File uploaded successfully!")
-                        task_id = result.get("task_id")
-                        
-                        if task_id:
-                            st.session_state.upload_history.append({
-                                "task_id": task_id,
-                                "filename": uploaded_file.name,
-                                "timestamp": time.time(),
-                                "status": "processing",
-                                "project_name": project_name,
-                                "priority": priority
-                            })
-                            
-                            # Show processing status
-                            status_placeholder = st.empty()
-                            progress_bar = st.progress(0)
-                            
-                            # Poll for results
-                            max_attempts = 30  # 5 minutes max
-                            for attempt in range(max_attempts):
-                                status_data = get_processing_status(task_id)
-                                
-                                if status_data:
-                                    status = status_data.get("status", "processing")
-                                    progress = status_data.get("progress", 0)
-                                    
-                                    status_placeholder.info(f"Status: {status.title()}")
-                                    progress_bar.progress(min(progress / 100, 1.0))
-                                    
-                                    if status == "completed":
-                                        st.success("Analysis completed!")
-                                        
-                                        # Display results using the beautiful spreadsheet format
-                                        if "results" in status_data:
-                                            # Convert the Django results format to match our display function
-                                            formatted_results = {
-                                                "id": task_id,
-                                                "original_filename": uploaded_file.name,
-                                                "status": "completed",
-                                                "progress_percentage": 100,
-                                                "results": status_data["results"]
-                                            }
-                                            display_results_spreadsheet(formatted_results)
-                                        else:
-                                            st.info("Analysis completed but no detailed results available")
-                                            # Show basic status info instead
-                                            st.json(status_data)
-                                        
-                                        # Update history
-                                        for item in st.session_state.upload_history:
-                                            if item["task_id"] == task_id:
-                                                item["status"] = "completed"
-                                        break
-                                    elif status == "failed":
-                                        st.error("Analysis failed. Please try again.")
-                                        break
-                                
-                                time.sleep(10)  # Wait 10 seconds before next check
-                            else:
-                                st.warning("Analysis is taking longer than expected. Check back later.")
+                        task_id = result.get("task_id") or result.get("id")
+                        # Update history
+                        st.session_state.upload_history.append({
+                            "task_id": task_id,
+                            "filename": uploaded_file.name,
+                            "timestamp": time.time(),
+                            "status": "completed" if result.get("status") == "completed" else result.get("status", "processing"),
+                            "project_name": project_name,
+                            "priority": priority
+                        })
+                        # Display results (base64 CSVs only)
+                        results_list = result.get("results")
+                        if result.get("status") == "completed" and isinstance(results_list, list):
+                            # Save to session state so UI interactions don't clear the view
+                            st.session_state.cad_results = results_list
+                            st.session_state.cad_session_id = session_id
+                        else:
+                            st.info("Completed, but no base64 CSV results to display.")
+                    else:
+                        st.info("Analysis completed but no results available yet.")
         
         else:
             # Show message when no file is uploaded
             st.info("👆 Upload a PDF file above to start analysis!")
         
-    
-    with col2:
-        st.subheader("📊 Recent Uploads")
-        
-        if st.session_state.upload_history:
-            # Filter for engineering uploads only
-            eng_uploads = [h for h in st.session_state.upload_history if h.get('task_id')]
-            
-            for item in reversed(eng_uploads[-5:]):  # Show last 5
-                with st.container():
-                    status_color = {
-                        'completed': '🟢',
-                        'processing': '🟡',
-                        'failed': '🔴',
-                        'pending': '⚪'
-                    }.get(item.get('status', 'unknown'), '⚪')
-                    
-                    st.markdown(f"**{status_color} {item['filename']}**")
-                    if item.get('project_name'):
-                        st.markdown(f"*Project: {item['project_name']}*")
-                    st.markdown(f"Status: {item['status'].title()}")
-                    st.markdown(f"Time: {time.strftime('%H:%M:%S', time.localtime(item['timestamp']))}")
-                    
-                    # Quick action buttons
-                    if item['status'] == 'completed':
-                        if st.button(f"📥 Download Results", key=f"download_{item['task_id']}"):
-                            st.info("Download functionality coming soon!")
-                    
-                    st.markdown("---")
-        else:
-            st.info("No recent uploads")
-        
-        # Quick actions
-        st.subheader("🚀 Quick Actions")
-        
-        if st.button("📚 View Templates", use_container_width=True):
-            st.info("Template library coming soon!")
-        
-        if st.button("📊 Analysis History", use_container_width=True):
-            st.info("Full history view coming soon!")
-        
-        if st.button("⚙️ Export Settings", use_container_width=True):
-            st.info("Settings export coming soon!")
-        
-        if st.button("❓ Help Guide", use_container_width=True):
-            with st.expander("🔍 Quick Help"):
-                st.markdown("""
-                **Supported File Types:**
-                - PDF (2D CAD drawings)
-                
-                **Analysis Features:**
-                - 📏 Dimension extraction
-                - 🎯 Tolerance analysis  
-                - 🔗 Part relationships
-                - 🔬 Material detection
-                - ✨ Surface finish
-                
-                **Tips:**
-                - Use high-quality PDFs for best results
-                - Include drawing numbers for tracking
-                - Higher accuracy = longer processing time
-                """)
+    # Always display last results if available (keeps tables visible during filter interactions)
+    if st.session_state.cad_results:
+        display_base64_results(st.session_state.cad_results, expected_session_id=st.session_state.cad_session_id)
 
 
-
-def display_results(results):
-    """Display analysis results"""
-    st.subheader("📈 Analysis Results")
     
-    # Create tabs for different result types
-    tabs = st.tabs(["📏 Dimensions", "🎯 Tolerances", "🔗 Relationships", "📥 Downloads"])
-    
-    with tabs[0]:
-        if "dimensions" in results:
-            st.json(results["dimensions"])
-        else:
-            st.info("No dimension data available")
-    
-    with tabs[1]:
-        if "tolerances" in results:
-            st.json(results["tolerances"])
-        else:
-            st.info("No tolerance data available")
-    
-    with tabs[2]:
-        if "relationships" in results:
-            st.json(results["relationships"])
-        else:
-            st.info("No relationship data available")
-    
-    with tabs[3]:
-        st.subheader("Download Results")
-        if "download_urls" in results:
-            for file_type, url in results["download_urls"].items():
-                st.download_button(
-                    label=f"Download {file_type.upper()}",
-                    data=requests.get(url).content,
-                    file_name=f"analysis_results.{file_type}",
-                    mime=f"application/{file_type}"
-                )

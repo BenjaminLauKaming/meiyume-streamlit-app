@@ -167,8 +167,7 @@ Meiyume_project/
 ├── frontend/                   # Streamlit frontend
 │   ├── main.py                # Multi-assistant interface
 │   ├── engAssistant.py        # CAD Analysis Assistant
-│   ├── qualityAssistant.py    # Quality Assistant (placeholder)
-│   ├── complaintAssistant.py  # Complaint Assistant (placeholder)
+│   ├── qualityRagChat.py      # Quality RAG Chat Assistant
 │   └── auth_utils.py          # Authentication utilities
 ├── n8n/                       # n8n workflow configurations
 │   └── cad_analysis_workflow_backup.json

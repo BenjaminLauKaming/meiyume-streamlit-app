@@ -34,8 +34,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "meiyume_core",
     "assistants.cad",
-    "assistants.quality",
-    "assistants.complaint",
+    "assistants.esg",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

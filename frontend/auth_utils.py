@@ -105,7 +105,7 @@ def ensure_authenticated():
 def render_login_form():
     """Render login form for JWT authentication"""
     st.title("🔐 Login")
-    st.info("Please login to access the CAD Analyzer")
+    st.info("Please login to access the AI Assistant Platform")
     
     with st.form("jwt_login_form"):
         username = st.text_input("Username", placeholder="Enter your username")

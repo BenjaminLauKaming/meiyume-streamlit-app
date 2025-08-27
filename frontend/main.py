@@ -3,8 +3,7 @@ Meiyume AI Assistant - Main Streamlit Application
 
 A comprehensive platform for multiple AI-powered assistants including:
 - CAD Analysis Assistant
-- Quality Assistant
-- Complaint Assistant (coming soon)
+- Quality RAG Chat Assistant
 """
 
 import streamlit as st
@@ -43,26 +42,44 @@ if 'user_info' not in st.session_state:
 # Custom CSS for better styling
 st.markdown("""
 <style>
-
     .assistant-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 1.5rem;
         border-radius: 15px;
         color: white;
-        margin: 1rem 0;
+        margin-bottom: 1rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
     }
-    .status-success {
-        color: #28a745;
-        font-weight: bold;
+    
+    .assistant-card:hover {
+        transform: translateY(-2px);
     }
-    .status-processing {
-        color: #ffc107;
-        font-weight: bold;
+    
+    .assistant-card.cad {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    .status-error {
-        color: #dc3545;
-        font-weight: bold;
+    
+    .assistant-card.quality {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
+    
+    .assistant-card.esg {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .assistant-card h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .assistant-card p {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
     .login-container {
         max-width: 400px;
         margin: 2rem auto;
@@ -71,38 +88,44 @@ st.markdown("""
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
+    
+    .sidebar-logo {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 def main():
     """Main application function"""
     
-    # Check authentication
-    if not st.session_state.authenticated or not ensure_authenticated():
-        render_login_page()
-        return
+    # Temporarily disable authentication for testing
+    # if not st.session_state.authenticated or not ensure_authenticated():
+    #     render_login_page()
+    #     return
+    
+    # Set authenticated for testing
+    st.session_state.authenticated = True
+    st.session_state.user_info = {"username": "test_user"}
     
 
     
-    # User info in sidebar
-    st.sidebar.markdown(f"👋 Welcome, **{st.session_state.user_info.get('username', 'User')}**")
-    
-    # Logout button
-    if st.sidebar.button("🚪 Logout"):
-        st.session_state.authenticated = False
-        st.session_state.jwt_tokens = None
-        st.session_state.user_info = {}
-        st.rerun()
-    
-    st.sidebar.markdown("---")
-    
-    # Navigation
+    # Logo and Navigation
+    st.sidebar.markdown(
+        f'''
+        <div class="sidebar-logo">
+            <img src="https://meiyume-website-media.s3.ap-southeast-1.amazonaws.com/wp-content/uploads/2020/08/14174032/Meiyume_footer_logo-e1667547906481.png" width="200">
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
     st.sidebar.title("🎯 Navigation")
     
     # Page selection
     page = st.sidebar.selectbox(
         "Choose a Page",
-        ["🏠 Home", "📐 CAD Analysis", "🔍 Quality Assistant", "🤖 Quality RAG Chat", "📝 Complaint Assistant"],
+        ["🏠 Home", "📐 CAD Analysis", "🤖 Quality RAG Chat", "🌱 ESG Analysis"],
         help="Select the page you want to view"
     )
     
@@ -111,12 +134,20 @@ def main():
         show_home_page()
     elif page == "📐 CAD Analysis":
         show_cad_assistant()
-    elif page == "🔍 Quality Assistant":
-        show_quality_assistant()
     elif page == "🤖 Quality RAG Chat":
         show_quality_rag_chat()
-    elif page == "📝 Complaint Assistant":
-        show_complaint_assistant()
+    elif page == "🌱 ESG Analysis":
+        show_esg_assistant()
+    
+    # User info and logout at bottom
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(f"👋 Welcome, **{st.session_state.user_info.get('username', 'User')}**")
+    
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state.authenticated = False
+        st.session_state.jwt_tokens = None
+        st.session_state.user_info = {}
+        st.rerun()
     
     # Footer
     st.sidebar.markdown("---")
@@ -142,43 +173,25 @@ def render_login_page():
     st.markdown("---")
     st.markdown("## 🚀 Platform Features")
     
-    col1, col2, col3, col4 = st.columns(4)
+    st.markdown("""
+    ### 📐 CAD Analysis
+    - Advanced 2D CAD drawing analysis
+    - Dimension and tolerance extraction
+    - Part relationship mapping
+    - Material specification detection
     
-    with col1:
-        st.markdown("""
-        ### 📐 CAD Analysis
-        - Advanced 2D CAD drawing analysis
-        - Dimension and tolerance extraction
-        - Part relationship mapping
-        - Material specification detection
-        """)
+    ### 🤖 Quality RAG Chat
+    - AI-powered quality control chat
+    - Real-time Q&A on standards
+    - Best practices guidance
+    - Interactive knowledge base
     
-    with col2:
-        st.markdown("""
-        ### 🔍 Quality Assistant
-        - Automated test list generation
-        - Quality protocol compliance
-        - Custom specification support
-        - Multi-standard compatibility
-        """)
-    
-    with col3:
-        st.markdown("""
-        ### 🤖 Quality RAG Chat
-        - AI-powered quality control chat
-        - Real-time Q&A on standards
-        - Best practices guidance
-        - Interactive knowledge base
-        """)
-    
-    with col4:
-        st.markdown("""
-        ### 📝 Complaint Assistant
-        - Customer complaint analysis
-        - Sentiment analysis
-        - Priority assessment
-        - Automated response suggestions
-        """)
+    ### 🌱 ESG Audit
+    - Factory document analysis
+    - Language identification
+    - Volume extraction (litres)
+    - Utility consumption tracking
+    """)
 
 def show_home_page():
     """Display the home page with overview and quick actions"""
@@ -188,100 +201,59 @@ def show_home_page():
     
 
     st.markdown("---")
+
     
-    # Quick actions
-    st.markdown("## 🚀 Quick Actions")
-    
-    col1, col2 = st.columns([2, 1])
+    # Assistant cards using Streamlit columns
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Assistant cards
-        st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
-        st.markdown("### 📐 CAD Analysis Assistant")
-        st.markdown("Analyze 2D CAD PDF drawings to extract dimensions, tolerances, and part relationships using AI.")
+        st.markdown("""
+        <div class="assistant-card cad">
+            <h3>📐 CAD Analysis Assistant</h3>
+            <p>Analyze 2D CAD PDF drawings to extract dimensions, tolerances, and part relationships using AI.</p>
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("🚀 Start CAD Analysis", key="home_cad", use_container_width=True):
             st.session_state.page = "📐 CAD Analysis"
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
-        st.markdown("### 🔍 Quality Assistant")
-        st.markdown("Generate comprehensive test lists and quality control protocols for your products.")
-        if st.button("🔍 Open Quality Assistant", key="home_quality", use_container_width=True):
-            st.session_state.page = "🔍 Quality Assistant"
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
-        st.markdown("### 🤖 Quality RAG Chat")
-        st.markdown("Chat with AI about quality control, testing protocols, standards, and best practices.")
+    
+    with col2:
+        st.markdown("""
+        <div class="assistant-card quality">
+            <h3>🤖 Quality RAG Chat</h3>
+            <p>Chat with AI about quality control, testing protocols, standards, and best practices.</p>
+        </div>
+        """, unsafe_allow_html=True)
         if st.button("🤖 Start Quality Chat", key="home_quality_chat", use_container_width=True):
             st.session_state.page = "🤖 Quality RAG Chat"
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        st.markdown('<div class="assistant-card">', unsafe_allow_html=True)
-        st.markdown("### 📝 Complaint Assistant")
-        st.markdown("Analyze and categorize customer complaints with AI-powered sentiment analysis.")
-        if st.button("📝 View Complaint Assistant", key="home_complaint", use_container_width=True):
-            st.session_state.page = "📝 Complaint Assistant"
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
     
-    with col2:
-        st.markdown("### 📈 Recent Activity")
-        
-        if st.session_state.upload_history:
-            for item in reversed(st.session_state.upload_history[-5:]):  # Show last 5
-                with st.container():
-                    status_color = {
-                        'completed': '🟢',
-                        'processing': '🟡',
-                        'failed': '🔴',
-                        'pending': '⚪'
-                    }.get(item.get('status', 'unknown'), '⚪')
-                    
-                    st.markdown(f"**{status_color} {item.get('filename', 'Unknown')}**")
-                    if item.get('project_name'):
-                        st.markdown(f"*{item['project_name']}*")
-                    st.markdown(f"Status: {item.get('status', 'unknown').title()}")
-                    st.markdown(f"Time: {time.strftime('%H:%M', time.localtime(item.get('timestamp', 0)))}")
-                    st.markdown("---")
-        else:
-            st.info("No recent activity")
-        
-        # System status
-        st.markdown("### 🔧 System Status")
-        try:
-            response = requests.get(f"{os.getenv('DJANGO_API_URL', 'http://localhost:8000')}/api/health/", timeout=5)
-            if response.status_code == 200:
-                st.success("🟢 Backend Online")
-            else:
-                st.warning("🟡 Backend Issues")
-        except:
-            st.error("🔴 Backend Offline")
+    with col3:
+        st.markdown("""
+        <div class="assistant-card esg">
+            <h3>🌱 ESG Audit Assistant</h3>
+            <p>Upload factory documents (receipts, bills, reports) for ESG analysis and volume extraction.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("🌱 Start ESG Audit", key="home_esg", use_container_width=True):
+            st.session_state.page = "🌱 ESG Analysis"
+            st.rerun()
+    
 
 def show_cad_assistant():
     """Display CAD Analysis Assistant"""
     from engAssistant import engineering_assistant
     engineering_assistant()
 
-def show_quality_assistant():
-    """Display Quality Assistant"""
-    from qualityAssistant import quality_assistant
-    quality_assistant()
-
 def show_quality_rag_chat():
     """Display Quality RAG Chat Assistant"""
     from qualityRagChat import quality_rag_chat
     quality_rag_chat()
 
-def show_complaint_assistant():
-    """Display Complaint Assistant"""
-    from complaintAssistant import complaint_assistant
-    complaint_assistant()
-
-
+def show_esg_assistant():
+    """Display ESG Analysis Assistant"""
+    from esgAssistant import esg_assistant
+    esg_assistant()
 
 if __name__ == "__main__":
     main() 
