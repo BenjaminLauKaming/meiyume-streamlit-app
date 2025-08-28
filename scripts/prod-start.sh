@@ -5,8 +5,33 @@ echo "🚀 Starting Meiyume AI Assistant Production Environment..."
 
 # Check if .env.prod file exists
 if [ ! -f .env.prod ]; then
-    echo "❌ .env.prod file not found! Please run ./scripts/setup-production.sh first"
-    echo "📝 Or create .env.prod manually from env_template.txt"
+    echo "📋 Creating .env.prod from template..."
+    cp env_template.txt .env.prod
+    
+    echo ""
+    echo "📝 Production Configuration Guide:"
+    echo "Please update .env.prod with these production settings:"
+    echo ""
+    echo "Required changes in .env.prod:"
+    echo "1. ENVIRONMENT=production"
+    echo "2. DEBUG=False"
+    echo "3. DJANGO_SETTINGS_MODULE=ai_cad_analyzer.settings.production"
+    echo "4. Set strong SECRET_KEY (generate new one)"
+    echo "5. Set ALLOWED_HOSTS=yourdomain.com,localhost"
+    echo "6. Configure PostgreSQL production database"
+    echo "7. Set REDIS_PASSWORD for security"
+    echo ""
+    echo "Optional (for real production):"
+    echo "8. Configure AWS S3 settings"
+    echo "9. Set up email settings"
+    echo "10. Configure Sentry for monitoring"
+    echo ""
+    echo "⚠️  For this demo, you can keep most default values"
+    echo "✏️  Edit .env.prod manually, then run this script again"
+    echo ""
+    echo "💡 To generate a new SECRET_KEY, run:"
+    echo "   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'"
+    echo ""
     exit 1
 fi
 
@@ -15,9 +40,9 @@ cp .env.prod .env
 
 # Verify production environment variables
 source .env
-if [ "$DEBUG" = "False" ]; then
+if [ "$DEBUG" = "True" ]; then
     echo "❌ DEBUG is set to True! This is not safe for production."
-    echo "📝 Please set DEBUG=False in your .env file"
+    echo "📝 Please set DEBUG=False in your .env.prod file"
     exit 1
 fi
 
