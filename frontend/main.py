@@ -64,6 +64,10 @@ st.markdown("""
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
     
+    .assistant-card.file-management {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    }
+    
     .assistant-card.esg {
         background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
     }
@@ -125,7 +129,7 @@ def main():
     # Page selection
     page = st.sidebar.selectbox(
         "Choose a Page",
-        ["🏠 Home", "📐 CAD Analysis", "🤖 Quality RAG Chat", "🌱 ESG Analysis"],
+        ["🏠 Home", "📐 CAD Analysis", "🤖 Quality RAG Chat", "📁 RAG File Management", "🌱 ESG Analysis"],
         help="Select the page you want to view"
     )
     
@@ -136,6 +140,8 @@ def main():
         show_cad_assistant()
     elif page == "🤖 Quality RAG Chat":
         show_quality_rag_chat()
+    elif page == "📁 RAG File Management":
+        show_rag_file_management()
     elif page == "🌱 ESG Analysis":
         show_esg_assistant()
     
@@ -186,6 +192,12 @@ def render_login_page():
     - Best practices guidance
     - Interactive knowledge base
     
+    ### 📁 RAG File Management
+    - Upload complaint records and detail reports
+    - Manage RAG knowledge base documents
+    - File categorization and tagging
+    - Content preview and organization
+    
     ### 🌱 ESG Audit
     - Factory document analysis
     - Language identification
@@ -204,7 +216,7 @@ def show_home_page():
 
     
     # Assistant cards using Streamlit columns
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
@@ -228,7 +240,21 @@ def show_home_page():
             st.session_state.page = "🤖 Quality RAG Chat"
             st.rerun()
     
+    # Second row of cards
+    col3, col4 = st.columns(2)
+    
     with col3:
+        st.markdown("""
+        <div class="assistant-card file-management">
+            <h3>📁 RAG File Management</h3>
+            <p>Upload and manage complaint records and detail reports for the RAG knowledge base.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("📁 Manage Files", key="home_file_management", use_container_width=True):
+            st.session_state.page = "📁 RAG File Management"
+            st.rerun()
+    
+    with col4:
         st.markdown("""
         <div class="assistant-card esg">
             <h3>🌱 ESG Audit Assistant</h3>
@@ -249,6 +275,11 @@ def show_quality_rag_chat():
     """Display Quality RAG Chat Assistant"""
     from qualityRagChat import quality_rag_chat
     quality_rag_chat()
+
+def show_rag_file_management():
+    """Display RAG File Management Interface"""
+    from qualityRagChat import rag_file_management
+    rag_file_management()
 
 def show_esg_assistant():
     """Display ESG Analysis Assistant"""

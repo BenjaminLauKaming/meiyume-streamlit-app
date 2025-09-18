@@ -9933,3 +9933,15 @@ INFO 2025-08-27 06:40:40,864 basehttp 9 281473414394272 "GET /api/upload/task_17
 INFO 2025-08-27 06:40:42,876 basehttp 9 281473414394272 "GET /api/upload/task_1756276716/ HTTP/1.1" 200 156
 INFO 2025-08-27 06:40:43,433 basehttp 9 281473414394272 "POST /api/cad/webhook/ HTTP/1.1" 200 171
 INFO 2025-08-27 06:40:44,891 basehttp 9 281473403908512 "GET /api/upload/task_1756276716/ HTTP/1.1" 200 17536
+INFO 2025-08-28 02:27:16,687 autoreload 9 281473501249568 Watching for file changes with StatReloader
+INFO 2025-08-28 02:30:25,183 autoreload 10 281473064218656 Watching for file changes with StatReloader
+INFO 2025-08-28 03:30:01,369 autoreload 10 281473064218656 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-08-28 03:30:02,130 autoreload 24 281473290342432 Watching for file changes with StatReloader
+INFO 2025-08-28 03:30:26,704 autoreload 24 281473290342432 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-08-28 03:30:27,270 autoreload 26 281473614491680 Watching for file changes with StatReloader
+INFO 2025-08-28 03:30:53,897 autoreload 26 281473614491680 /app/meiyume_core/urls.py changed, reloading.
+INFO 2025-08-28 03:30:54,525 autoreload 28 281472833179680 Watching for file changes with StatReloader
+INFO 2025-08-28 03:30:58,674 autoreload 28 281472833179680 /app/meiyume_core/views.py changed, reloading.
+INFO 2025-08-28 03:30:59,358 autoreload 30 281473071210528 Watching for file changes with StatReloader
+INFO 2025-09-15 06:06:13,797 autoreload 10 281473869967392 Watching for file changes with StatReloader
+INFO 2025-09-15 06:15:20,432 autoreload 10 281473068048416 Watching for file changes with StatReloader
