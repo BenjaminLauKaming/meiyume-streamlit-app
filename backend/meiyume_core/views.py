@@ -53,33 +53,49 @@ class FileUploadView(generics.CreateAPIView):
             # Convert file to base64
             file_content = uploaded_file.read()
             file_base64 = base64.b64encode(file_content).decode('utf-8')
+
+            # Prefer submitting directly to the n8n Form URL if configured; fallback to webhook
+            from django.conf import settings
+            n8n_form_url = getattr(settings, 'N8N_FORM_URL', '')
+            n8n_webhook_url = getattr(settings, 'N8N_WEBHOOK_URL', '')
+            submitting_to_form = bool(n8n_form_url)
+            if not submitting_to_form and not n8n_webhook_url:
+                return Response({'error': 'Neither N8N_FORM_URL nor N8N_WEBHOOK_URL configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-            # Send to n8n workflow via webhook
-            n8n_webhook_url = "https://meiyume.app.n8n.cloud/webhook/3f700683-6240-4e87-8fc3-dcbeb96ea69c"
-            
-            # Reset file pointer to beginning and read content once
-            uploaded_file.seek(0)
-            file_content = uploaded_file.read()
-            
-            # Prepare webhook payload
-            webhook_payload = {
-                "data": base64.b64encode(file_content).decode('utf-8'),
-                "session_id": session_id
-            }
-            
-            # Debug: Log what we're sending
-            print(f"DEBUG: Sending to n8n webhook - URL: {n8n_webhook_url}")
-            print(f"DEBUG: Payload keys: {list(webhook_payload.keys())}")
-            print(f"DEBUG: File content length: {len(file_content)} bytes")
-            print(f"DEBUG: Session ID: {session_id}")
-            print(f"DEBUG: File name: {uploaded_file.name}")
-            
-            response = requests.post(
-                n8n_webhook_url,
-                json=webhook_payload,
-                headers={'Content-Type': 'application/json'},
-                timeout=30
-            )
+            # Prepare payload depending on target
+            if submitting_to_form:
+                # Submit to n8n Form endpoint as multipart file + fields
+                # n8n form expects a file field ("data") and a text field ("session_id")
+                files_payload = {
+                    'data': (uploaded_file.name, file_content, getattr(uploaded_file, 'content_type', 'application/pdf') or 'application/pdf')
+                }
+                fields_payload = {
+                    'session_id': session_id,
+                    'filename': uploaded_file.name,
+                }
+                print(f"DEBUG: Sending to n8n form - URL: {n8n_form_url}")
+                print(f"DEBUG: Multipart keys -> files: {list(files_payload.keys())}, data: {list(fields_payload.keys())}")
+                response = requests.post(
+                    n8n_form_url,
+                    files=files_payload,
+                    data=fields_payload,
+                    timeout=60
+                )
+            else:
+                # Send to n8n webhook as JSON
+                webhook_payload = {
+                    'data': file_base64,
+                    'session_id': session_id,
+                    'filename': uploaded_file.name,
+                }
+                print(f"DEBUG: Sending to n8n webhook - URL: {n8n_webhook_url}")
+                print(f"DEBUG: Payload keys: {list(webhook_payload.keys())}")
+                response = requests.post(
+                    n8n_webhook_url,
+                    json=webhook_payload,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=30
+                )
             
             # Debug: Log response
             print(f"DEBUG: n8n response status: {response.status_code}")
@@ -116,8 +132,11 @@ class FileUploadView(generics.CreateAPIView):
                     'session_id': session_id
                 }, status=status.HTTP_201_CREATED)
             else:
+                # Include body for easier debugging (truncate to avoid huge payloads)
+                body_snippet = response.text[:500] if response.text else ''
+                target = 'form' if submitting_to_form else 'webhook'
                 return Response(
-                    {'error': f'n8n workflow error: {response.status_code}'}, 
+                    {'error': f'n8n {target} error: {response.status_code}', 'body': body_snippet}, 
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 

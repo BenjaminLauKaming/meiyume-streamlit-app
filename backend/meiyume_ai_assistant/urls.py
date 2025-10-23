@@ -30,6 +30,8 @@ from simple_esg_webhook import simple_esg_webhook
 from get_latest_esg import get_latest_esg_result
 from simple_cad_webhook import simple_cad_webhook
 from get_latest_cad import get_latest_cad_result
+from simple_compliance_webhook import simple_compliance_webhook
+from get_latest_compliance import get_latest_compliance_result
 
 def test_webhook(request):
     """Test webhook endpoint to verify connectivity"""
@@ -66,6 +68,10 @@ urlpatterns = [
     # path('api/esg/', include('assistants.esg.urls')),  # Temporarily disabled until DB is set up
     path('api/esg/webhook/', simple_esg_webhook, name='simple-esg-webhook'),
     path('api/esg/latest/', get_latest_esg_result, name='get-latest-esg'),
+
+    # Compliance (MSDS) simple endpoints
+    path('api/compliance/webhook/', simple_compliance_webhook, name='simple-compliance-webhook'),
+    path('api/compliance/latest/', get_latest_compliance_result, name='get-latest-compliance'),
     
     # JWT authentication endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

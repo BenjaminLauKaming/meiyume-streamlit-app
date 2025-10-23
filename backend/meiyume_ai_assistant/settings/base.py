@@ -182,7 +182,7 @@ AZURE_AD_TENANT_ID = config('AZURE_AD_TENANT_ID', default='')
 # n8n Settings
 N8N_WEBHOOK_URL = config('N8N_WEBHOOK_URL', default='https://meiyume.app.n8n.cloud/webhook/fe198a5f-79e0-4dc7-82d1-ce7fb65e9c5e')
 N8N_WEBHOOK_SECRET = config('N8N_WEBHOOK_SECRET', default='your-webhook-secret')
-N8N_FORM_URL = config('N8N_FORM_URL', default='https://meiyume.app.n8n.cloud/form/cb9d8f80-4e72-4abb-acdf-80abad36abe2')
+N8N_FORM_URL = config('N8N_FORM_URL', default='https://meiyume.app.n8n.cloud/form/e86e9252-da88-4a6d-a0b4-8c8a3dc72a82')
 
 # Google Gemini Settings
 GOOGLE_GEMINI_API_KEY = config('GOOGLE_GEMINI_API_KEY', default='')

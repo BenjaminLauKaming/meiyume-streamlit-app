@@ -129,7 +129,7 @@ def main():
     # Page selection
     page = st.sidebar.selectbox(
         "Choose a Page",
-        ["🏠 Home", "📐 CAD Analysis", "🤖 Quality RAG Chat", "📁 RAG File Management", "🌱 ESG Analysis"],
+        ["🏠 Home", "📐 CAD Analysis", "🤖 Quality RAG Chat", "📁 RAG File Management", "🌱 ESG Analysis", "🧪 Compliance Checker"],
         help="Select the page you want to view"
     )
     
@@ -144,6 +144,8 @@ def main():
         show_rag_file_management()
     elif page == "🌱 ESG Analysis":
         show_esg_assistant()
+    elif page == "🧪 Compliance Checker":
+        show_compliance_checker()
     
     # User info and logout at bottom
     st.sidebar.markdown("---")
@@ -285,6 +287,11 @@ def show_esg_assistant():
     """Display ESG Analysis Assistant"""
     from esgAssistant import esg_assistant
     esg_assistant()
+
+def show_compliance_checker():
+    """Display Compliance Checker"""
+    from complianceAssistant import compliance_assistant
+    compliance_assistant()
 
 if __name__ == "__main__":
     main() 

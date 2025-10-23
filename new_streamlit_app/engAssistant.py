@@ -7,16 +7,22 @@ import pandas as pd
 from datetime import datetime, timezone
 from io import BytesIO, StringIO
 from dotenv import load_dotenv
-from auth_utils import get_auth_headers
 import uuid
 import base64
+from sqlalchemy import text
 
+# Try to import MultipartEncoder, fallback to manual multipart if not available
+try:
+    from requests_toolbelt import MultipartEncoder
+    HAS_MULTIPART_ENCODER = True
+except ImportError:
+    HAS_MULTIPART_ENCODER = False
+    print("Warning: requests_toolbelt not available, using fallback multipart method")
 
 load_dotenv()
 
-
-# Configuration
-DJANGO_API_URL = os.getenv("DJANGO_API_URL", "http://localhost:8000")
+# n8n workflow URL for CAD analysis - using webhook endpoint
+N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/3c737ba6-d463-4e54-9cd4-addadca410b4"
 
 def display_results_spreadsheet(results_data):
     """Display CAD analysis results in a beautiful spreadsheet format"""
@@ -308,108 +314,6 @@ def display_results_spreadsheet(results_data):
             )
         
         st.info("💡 Tip: Use the CSV files to import data into Excel or other spreadsheet applications for further analysis.")
-UPLOAD_ENDPOINT = f"{DJANGO_API_URL}/api/upload/"
-RESULTS_ENDPOINT = f"{DJANGO_API_URL}/api/upload/"
-
-def upload_file_to_django(file, session_id):
-    """Upload file to Django backend which forwards to n8n webhook"""
-    try:
-        files = {"file": (file.name, file.getvalue(), file.type or "application/pdf")}
-        data = {
-            "session_id": session_id
-        }
-        response = requests.post(
-            UPLOAD_ENDPOINT,
-            files=files,
-            data=data,
-            timeout=60
-        )
-        if response.status_code in [200, 201]:
-            return response.json()
-        st.error(f"Upload failed: {response.status_code} - {response.text}")
-        return None
-    except requests.exceptions.RequestException as e:
-        st.error(f"Network error: {str(e)}")
-        return None
-    except Exception as e:
-        st.error(f"Upload error: {str(e)}")
-        return None
-
-def get_processing_status(task_id):
-    """Check processing status from Django backend"""
-    try:
-        response = requests.get(
-            f"{RESULTS_ENDPOINT}{task_id}/",
-            timeout=15
-        )
-        if response.status_code == 200:
-            return response.json()
-        return None
-    except requests.exceptions.RequestException:
-        return None
-
-def upload_file_with_progress(uploaded_file, session_id):
-    """Upload file with progress and poll until results are available"""
-    steps = [
-        ("📤 Uploading file...", 0.20),
-        ("📡 Sending to n8n workflow...", 0.40),
-        ("⚙️ Processing...", 0.70),
-        ("📊 Generating results...", 0.90),
-        ("✅ Finalizing...", 1.0)
-    ]
-    progress_bar = st.progress(0)
-    status_container = st.empty()
-    try:
-        status_container.info(steps[0][0])
-        progress_bar.progress(steps[0][1])
-        upload_resp = upload_file_to_django(uploaded_file, session_id)
-        if not upload_resp:
-            status_container.error("❌ Upload failed")
-            return None
-        task_id = upload_resp.get("task_id") or upload_resp.get("id")
-        if not task_id:
-            status_container.error("❌ No task id returned from server")
-            return None
-        status_container.info(steps[1][0])
-        progress_bar.progress(steps[1][1])
-        # Poll for results (up to 3 minutes)
-        max_attempts = 90  # 90 * 2s = 180s (3 minutes)
-        for attempt in range(max_attempts):
-            time.sleep(2)
-            result_data = get_processing_status(task_id)
-            if not result_data:
-                continue
-            status = result_data.get("status", "processing")
-            # surface backend status/message to help diagnose session matching
-            if result_data.get("message"):
-                status_container.info(result_data.get("message"))
-            if status == "completed":
-                # If backend provides a session_id, ensure it matches before finishing
-                backend_session_id = result_data.get("session_id")
-                if backend_session_id and backend_session_id != session_id:
-                    status_container.info("Results received for a different session. Waiting for this session_id...")
-                    continue
-                status_container.info(steps[4][0])
-                progress_bar.progress(steps[4][1])
-                time.sleep(0.3)
-                status_container.success("✅ Analysis completed successfully!")
-                return {"task_id": task_id, **result_data}
-            if status == "failed":
-                status_container.error("❌ Processing failed")
-                return None
-            # update progress if provided
-            progress = result_data.get("progress", 0)
-            if isinstance(progress, (int, float)):
-                progress_bar.progress(min(max(progress / 100.0, 0.0), 0.95))
-            else:
-                # show mid progress while waiting
-                progress_bar.progress(min(steps[2][1] + attempt * 0.002, 0.95))
-            status_container.info(f"⏳ Status: {status}")
-        status_container.error("❌ No results received within 3 minutes. Please try again or check the workflow.")
-        return None
-    except Exception as e:
-        status_container.error(f"❌ Error: {str(e)}")
-        return None
 
 def display_base64_results(results_list, expected_session_id=None):
     """Decode base64 CSV results and display as dataframes, filtering by session_id"""
@@ -443,7 +347,7 @@ def display_base64_results(results_list, expected_session_id=None):
         if dim_df is not None:
             # Normalize column names
             dim_df = dim_df.copy()
-            dim_df.columns = [str(c).replace('\ufeff', '').strip() for c in dim_df.columns]
+            dim_df.columns = [str(c).replace('﻿', '').strip() for c in dim_df.columns]
             lower_cols = {c.lower(): c for c in dim_df.columns}
             # Map common names to standard
             rename_map = {}
@@ -512,22 +416,35 @@ def display_base64_results(results_list, expected_session_id=None):
             editable_df = editable_df.reset_index().rename(columns={"index": "row_id"})
             editable_df["selected"] = editable_df["row_id"].apply(lambda i: i in st.session_state[sel_state_key])
 
-            edited_df = st.data_editor(
-                editable_df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "selected": st.column_config.CheckboxColumn("Select", help="Mark rows to export"),
-                    "row_id": st.column_config.NumberColumn("row_id", help="Internal id", disabled=True)
-                },
-                key=f"dim_editor_{key_prefix}"
-            )
-
-            # Update session selection state
-            selected_ids = set(edited_df.loc[edited_df["selected"] == True, "row_id"].tolist())
-            st.session_state[sel_state_key] = selected_ids
+            # Use st.dataframe with custom checkboxes to avoid rerun issues
+            st.markdown("**Select rows to export:**")
+            
+            # Display the table with checkboxes
+            for idx, row in filtered.iterrows():
+                col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2, 2, 1, 1, 1])
+                
+                with col1:
+                    checkbox_key = f"dim_checkbox_{key_prefix}_{idx}"
+                    is_checked = st.checkbox("", value=idx in st.session_state[sel_state_key], key=checkbox_key)
+                    
+                    if is_checked and idx not in st.session_state[sel_state_key]:
+                        st.session_state[sel_state_key].add(idx)
+                    elif not is_checked and idx in st.session_state[sel_state_key]:
+                        st.session_state[sel_state_key].remove(idx)
+                
+                with col2:
+                    st.write(row.get('part_name', ''))
+                with col3:
+                    st.write(row.get('feature', ''))
+                with col4:
+                    st.write(row.get('value', ''))
+                with col5:
+                    st.write(row.get('tolerance', ''))
+                with col6:
+                    st.write(row.get('unit', ''))
 
             # Prepare selected rows for export
+            selected_ids = st.session_state[sel_state_key]
             if selected_ids:
                 selected_rows = filtered.loc[filtered.index.isin(selected_ids)]
                 st.success(f"{len(selected_rows)} row(s) selected")
@@ -562,7 +479,7 @@ def display_base64_results(results_list, expected_session_id=None):
         if match_df is not None:
             # Normalize column names
             match_df = match_df.copy()
-            match_df.columns = [str(c).replace('\ufeff', '').strip() for c in match_df.columns]
+            match_df.columns = [str(c).replace('﻿', '').strip() for c in match_df.columns]
             lower_cols_m = {c.lower(): c for c in match_df.columns}
             rename_map_m = {}
             for key in ['dimension_type','part_a','feature_a','value_a','part_b','feature_b','value_b','difference_mm','range_difference_mm']:
@@ -657,20 +574,34 @@ def display_base64_results(results_list, expected_session_id=None):
             m_editable_df = m_editable_df.reset_index().rename(columns={"index": "row_id"})
             m_editable_df["selected"] = m_editable_df["row_id"].apply(lambda i: i in st.session_state[m_sel_state_key])
 
-            m_edited_df = st.data_editor(
-                m_editable_df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "selected": st.column_config.CheckboxColumn("Select", help="Mark rows to export"),
-                    "row_id": st.column_config.NumberColumn("row_id", help="Internal id", disabled=True)
-                },
-                key=f"match_editor_{key_prefix}"
-            )
+            # Use st.dataframe with custom checkboxes to avoid rerun issues
+            st.markdown("**Select rows to export:**")
+            
+            # Display the table with checkboxes
+            for idx, row in m_filtered.iterrows():
+                col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2, 2, 1, 1, 1])
+                
+                with col1:
+                    checkbox_key = f"match_checkbox_{key_prefix}_{idx}"
+                    is_checked = st.checkbox("", value=idx in st.session_state[m_sel_state_key], key=checkbox_key)
+                    
+                    if is_checked and idx not in st.session_state[m_sel_state_key]:
+                        st.session_state[m_sel_state_key].add(idx)
+                    elif not is_checked and idx in st.session_state[m_sel_state_key]:
+                        st.session_state[m_sel_state_key].remove(idx)
+                
+                with col2:
+                    st.write(row.get('part_a', ''))
+                with col3:
+                    st.write(row.get('part_b', ''))
+                with col4:
+                    st.write(row.get('difference_mm', ''))
+                with col5:
+                    st.write(row.get('fit_status', ''))
+                with col6:
+                    st.write(row.get('dimension_type', ''))
 
-            m_selected_ids = set(m_edited_df.loc[m_edited_df["selected"] == True, "row_id"].tolist())
-            st.session_state[m_sel_state_key] = m_selected_ids
-
+            m_selected_ids = st.session_state[m_sel_state_key]
             if m_selected_ids:
                 m_selected_rows = m_filtered.loc[m_filtered.index.isin(m_selected_ids)]
                 st.success(f"{len(m_selected_rows)} row(s) selected")
@@ -701,8 +632,111 @@ def display_base64_results(results_list, expected_session_id=None):
         else:
             st.info("No matching data available")
 
-def engineering_assistant():
+def engineering_assistant(db_engine):
     """Engineering Assistant main interface"""
+    def submit_to_n8n_and_poll(uploaded_file, session_id):
+        """Submit file to n8n and poll for results from database."""
+        progress_bar = st.progress(0)
+        status_container = st.empty()
+        try:
+            status_container.info("Submitting file to n8n workflow...")
+            progress_bar.progress(0.2)
+            
+            # Get webhook URL - use ngrok URL if available, otherwise localhost
+            webhook_url = os.getenv('WEBHOOK_URL', 'http://localhost:5001/webhook/cad')
+            
+            file_content = uploaded_file.getvalue()
+            file_base64 = base64.b64encode(file_content).decode('utf-8')
+            
+            # Use JSON approach like Django backend does for webhooks
+            webhook_payload = {
+                'data': file_base64,
+                'session_id': session_id,
+                'filename': uploaded_file.name,
+                'webhook_url': webhook_url
+            }
+            
+            # Debug logging
+            print(f"DEBUG: Sending to n8n webhook - URL: {N8N_CAD_WORKFLOW_URL}")
+            print(f"DEBUG: Payload keys: {list(webhook_payload.keys())}")
+            print(f"DEBUG: File name: {uploaded_file.name}")
+            print(f"DEBUG: Session ID: {session_id}")
+            print(f"DEBUG: File size: {len(file_content)} bytes")
+            print(f"DEBUG: Base64 size: {len(file_base64)} chars")
+            
+            response = requests.post(
+                N8N_CAD_WORKFLOW_URL,
+                json=webhook_payload,
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Meiyume-AI-Assistant/1.0'
+                },
+                timeout=60
+            )
+
+            # Debug response
+            print(f"DEBUG: Response status: {response.status_code}")
+            print(f"DEBUG: Response text: {response.text[:200]}...")
+
+            if response.status_code not in [200, 201]:
+                st.error(f"n8n submission failed: {response.status_code} - {response.text}")
+                return None
+
+            status_container.info("File submitted. Awaiting results...")
+            progress_bar.progress(0.5)
+            
+            result_data = poll_for_cad_results_from_db(db_engine, session_id)
+            
+            if result_data:
+                status_container.success("Analysis completed!")
+                progress_bar.progress(1.0)
+                return result_data
+            else:
+                status_container.warning("Processing timed out or failed.")
+                return None
+                
+        except Exception as e:
+            status_container.error(f"An error occurred: {e}")
+            return None
+
+    def poll_for_cad_results_from_db(db_engine, session_id):
+        """Polls the database for results from n8n webhook."""
+        max_attempts = 180  # Poll for 3 minutes (90 * 2s)
+        
+        for attempt in range(max_attempts):
+            time.sleep(2)
+            try:
+                # Query the database for results
+                query = text("""
+                    SELECT data FROM results 
+                    WHERE session_id = :session_id AND agent_type = 'cad'
+                    ORDER BY created_at DESC 
+                    LIMIT 1
+                """)
+                
+                with db_engine.connect() as connection:
+                    result = connection.execute(query, {"session_id": session_id})
+                    row = result.fetchone()
+                    
+                    if row:
+                        # The data is already a dict, not a JSON string
+                        db_data = row[0]  # row[0] is already the dict
+                        
+                        # Convert database format to display format
+                        # Database has: {"dimension": "base64_csv", "matching": "base64_csv", "session_id": "uuid"}
+                        # Display expects: [{"dimension": "base64_csv", "matching": "base64_csv", "session_id": "uuid"}]
+                        
+                        results_list = [db_data]  # Wrap in list for display_base64_results
+                        return {
+                            "status": "completed",
+                            "results": results_list
+                        }
+                        
+            except Exception as e:
+                print(f"Database query error: {e}")
+                continue
+                
+        return None        
     st.title("⚙️ Engineering Assistant")
     st.markdown("### Advanced CAD Drawing Analysis with AI")
 
@@ -712,6 +746,43 @@ def engineering_assistant():
         st.session_state.cad_results = None
     if 'cad_session_id' not in st.session_state:
         st.session_state.cad_session_id = None
+    
+    # Test button to simulate results with existing session ID
+    if st.button("🧪 Test with Existing Session ID", type="secondary"):
+        test_session_id = "8f0101e0-aa1f-4f95-81a9-52a629b92f03"
+        st.info(f"Testing with session ID: {test_session_id}")
+        
+        # Query the database for this specific session
+        try:
+            query = text("""
+                SELECT data FROM results 
+                WHERE session_id = :session_id AND agent_type = 'cad'
+                ORDER BY created_at DESC 
+                LIMIT 1
+            """)
+            
+            with db_engine.connect() as connection:
+                result = connection.execute(query, {"session_id": test_session_id})
+                row = result.fetchone()
+                
+                if row:
+                    # The data is already a dict, not a JSON string
+                    db_data = row[0]  # row[0] is already the dict
+                    
+                    # Convert database format to display format
+                    results_list = [db_data]  # Wrap in list for display_base64_results
+                    
+                    # Save to session state
+                    st.session_state.cad_results = results_list
+                    st.session_state.cad_session_id = test_session_id
+                    
+                    st.success("✅ Test data loaded successfully!")
+                    st.rerun()
+                else:
+                    st.error("❌ No data found for that session ID")
+                    
+        except Exception as e:
+            st.error(f"❌ Error loading test data: {e}")
     
     
     
@@ -754,11 +825,13 @@ def engineering_assistant():
                     # Generate a fresh session_id per upload and keep for matching
                     session_id = str(uuid.uuid4())
                     st.info(f"Tracking session: {session_id}")
-                    result = upload_file_with_progress(uploaded_file, session_id)
+                    result = submit_to_n8n_and_poll(uploaded_file, session_id)
                     if result:
                         st.success("File uploaded successfully!")
                         task_id = result.get("task_id") or result.get("id")
                         # Update history
+                        if 'upload_history' not in st.session_state:
+                            st.session_state.upload_history = []
                         st.session_state.upload_history.append({
                             "task_id": task_id,
                             "filename": uploaded_file.name,
@@ -785,6 +858,3 @@ def engineering_assistant():
     # Always display last results if available (keeps tables visible during filter interactions)
     if st.session_state.cad_results:
         display_base64_results(st.session_state.cad_results, expected_session_id=st.session_state.cad_session_id)
-
-
-    

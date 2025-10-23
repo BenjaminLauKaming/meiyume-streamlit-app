@@ -185,7 +185,7 @@ AZURE_AD_TENANT_ID = config('AZURE_AD_TENANT_ID', default='')
 # n8n Settings
 N8N_WEBHOOK_URL = config('N8N_WEBHOOK_URL', default='http://localhost:5678/webhook/cad-analysis')
 N8N_WEBHOOK_SECRET = config('N8N_WEBHOOK_SECRET', default='your-webhook-secret')
-N8N_FORM_URL = config('N8N_FORM_URL', default='http://localhost:5678/form/ffc0c29a-e891-4521-b822-e0d1ac468a19')
+N8N_FORM_URL = config('N8N_FORM_URL', default='https://meiyume.app.n8n.cloud/form/e86e9252-da88-4a6d-a0b4-8c8a3dc72a82')
 
 # Google Gemini Settings
 GOOGLE_GEMINI_API_KEY = config('GOOGLE_GEMINI_API_KEY', default='')
