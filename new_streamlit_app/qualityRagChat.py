@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 # Please fill in your n8n webhook URL for the RAG chat
-N8N_WEBHOOK_URL = ""
+N8N_WEBHOOK_URL = "https://meiyume.app.n8n.cloud/webhook/9c73c27e-0fd2-470f-9064-5d3e55ee08ef/chat"
 
 def quality_rag_chat():
     """Quality RAG Chat Assistant main interface"""
@@ -41,7 +41,24 @@ def quality_rag_chat():
                 )
                 if response.status_code == 200:
                     result = response.json()
-                    full_response = result.get("response", "Sorry, I could not get a response.")
+                    
+                    # Try different possible field names for the response
+                    ai_response = None
+                    if "output" in result:
+                        ai_response = result["output"]
+                    elif "response" in result:
+                        ai_response = result["response"]
+                    elif "result" in result:
+                        ai_response = result["result"]
+                    elif "message" in result:
+                        ai_response = result["message"]
+                    elif "text" in result:
+                        ai_response = result["text"]
+                    else:
+                        # If no standard field found, use the entire response as string
+                        ai_response = str(result)
+                    
+                    full_response = ai_response if ai_response else "Sorry, I could not get a response."
                 else:
                     full_response = f"Error: {response.status_code}"
             except Exception as e:

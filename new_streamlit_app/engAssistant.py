@@ -22,7 +22,7 @@ except ImportError:
 load_dotenv()
 
 # n8n workflow URL for CAD analysis - using webhook endpoint
-N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/3c737ba6-d463-4e54-9cd4-addadca410b4"
+N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/3c737ba6-d463-4e54-9cd4-addadca410b4"
 
 def display_results_spreadsheet(results_data):
     """Display CAD analysis results in a beautiful spreadsheet format"""
@@ -419,13 +419,30 @@ def display_base64_results(results_list, expected_session_id=None):
             # Use st.dataframe with custom checkboxes to avoid rerun issues
             st.markdown("**Select rows to export:**")
             
+            # Add table headers for dimensions
+            header_col1, header_col2, header_col3, header_col4, header_col5, header_col6, header_col7 = st.columns([0.5, 2, 1.5, 2, 0.8, 1, 1])
+            with header_col1:
+                st.markdown("**Select**")
+            with header_col2:
+                st.markdown("**Part Name**")
+            with header_col3:
+                st.markdown("**Dimension Type**")
+            with header_col4:
+                st.markdown("**Feature**")
+            with header_col5:
+                st.markdown("**Unit**")
+            with header_col6:
+                st.markdown("**Value**")
+            with header_col7:
+                st.markdown("**Tolerance**")
+            
             # Display the table with checkboxes
             for idx, row in filtered.iterrows():
-                col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2, 2, 1, 1, 1])
+                col1, col2, col3, col4, col5, col6, col7 = st.columns([0.5, 2, 1.5, 2, 0.8, 1, 1])
                 
                 with col1:
                     checkbox_key = f"dim_checkbox_{key_prefix}_{idx}"
-                    is_checked = st.checkbox("", value=idx in st.session_state[sel_state_key], key=checkbox_key)
+                    is_checked = st.checkbox("Select", value=idx in st.session_state[sel_state_key], key=checkbox_key, label_visibility="collapsed")
                     
                     if is_checked and idx not in st.session_state[sel_state_key]:
                         st.session_state[sel_state_key].add(idx)
@@ -435,13 +452,15 @@ def display_base64_results(results_list, expected_session_id=None):
                 with col2:
                     st.write(row.get('part_name', ''))
                 with col3:
-                    st.write(row.get('feature', ''))
+                    st.write(row.get('dimension_type', ''))
                 with col4:
-                    st.write(row.get('value', ''))
+                    st.write(row.get('feature', ''))
                 with col5:
-                    st.write(row.get('tolerance', ''))
-                with col6:
                     st.write(row.get('unit', ''))
+                with col6:
+                    st.write(row.get('value', ''))
+                with col7:
+                    st.write(row.get('tolerance', ''))
 
             # Prepare selected rows for export
             selected_ids = st.session_state[sel_state_key]
@@ -577,13 +596,40 @@ def display_base64_results(results_list, expected_session_id=None):
             # Use st.dataframe with custom checkboxes to avoid rerun issues
             st.markdown("**Select rows to export:**")
             
+            # Add table headers for matching
+            header_col1, header_col2, header_col3, header_col4, header_col5, header_col6, header_col7, header_col8, header_col9, header_col10, header_col11, header_col12 = st.columns([0.5, 1.2, 1.2, 1.5, 1, 1, 1.2, 1.5, 1, 1, 1, 1])
+            with header_col1:
+                st.markdown("**Select**")
+            with header_col2:
+                st.markdown("**Dimension Type**")
+            with header_col3:
+                st.markdown("**Part A**")
+            with header_col4:
+                st.markdown("**Feature A**")
+            with header_col5:
+                st.markdown("**Value A**")
+            with header_col6:
+                st.markdown("**Range A**")
+            with header_col7:
+                st.markdown("**Part B**")
+            with header_col8:
+                st.markdown("**Feature B**")
+            with header_col9:
+                st.markdown("**Value B**")
+            with header_col10:
+                st.markdown("**Range B**")
+            with header_col11:
+                st.markdown("**Difference (mm)**")
+            with header_col12:
+                st.markdown("**Range Diff (mm)**")
+            
             # Display the table with checkboxes
             for idx, row in m_filtered.iterrows():
-                col1, col2, col3, col4, col5, col6 = st.columns([0.5, 2, 2, 1, 1, 1])
+                col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12 = st.columns([0.5, 1.2, 1.2, 1.5, 1, 1, 1.2, 1.5, 1, 1, 1, 1])
                 
                 with col1:
                     checkbox_key = f"match_checkbox_{key_prefix}_{idx}"
-                    is_checked = st.checkbox("", value=idx in st.session_state[m_sel_state_key], key=checkbox_key)
+                    is_checked = st.checkbox("Select", value=idx in st.session_state[m_sel_state_key], key=checkbox_key, label_visibility="collapsed")
                     
                     if is_checked and idx not in st.session_state[m_sel_state_key]:
                         st.session_state[m_sel_state_key].add(idx)
@@ -591,15 +637,27 @@ def display_base64_results(results_list, expected_session_id=None):
                         st.session_state[m_sel_state_key].remove(idx)
                 
                 with col2:
-                    st.write(row.get('part_a', ''))
-                with col3:
-                    st.write(row.get('part_b', ''))
-                with col4:
-                    st.write(row.get('difference_mm', ''))
-                with col5:
-                    st.write(row.get('fit_status', ''))
-                with col6:
                     st.write(row.get('dimension_type', ''))
+                with col3:
+                    st.write(row.get('part_a', ''))
+                with col4:
+                    st.write(row.get('feature_a', ''))
+                with col5:
+                    st.write(row.get('value_a', ''))
+                with col6:
+                    st.write(row.get('range_a', ''))
+                with col7:
+                    st.write(row.get('part_b', ''))
+                with col8:
+                    st.write(row.get('feature_b', ''))
+                with col9:
+                    st.write(row.get('value_b', ''))
+                with col10:
+                    st.write(row.get('range_b', ''))
+                with col11:
+                    st.write(row.get('difference_mm', ''))
+                with col12:
+                    st.write(row.get('range_difference_mm', ''))
 
             m_selected_ids = st.session_state[m_sel_state_key]
             if m_selected_ids:
