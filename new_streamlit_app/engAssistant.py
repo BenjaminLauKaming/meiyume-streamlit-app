@@ -22,7 +22,7 @@ except ImportError:
 load_dotenv()
 
 # n8n workflow URL for CAD analysis - using webhook endpoint
-N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/3c737ba6-d463-4e54-9cd4-addadca410b4"
+N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/3c737ba6-d463-4e54-9cd4-addadca410b4"
 
 def display_results_spreadsheet(results_data):
     """Display CAD analysis results in a beautiful spreadsheet format"""
@@ -700,18 +700,14 @@ def engineering_assistant(db_engine):
             status_container.info("Submitting file to n8n workflow...")
             progress_bar.progress(0.2)
             
-            # Get webhook URL - use ngrok URL if available, otherwise localhost
-            webhook_url = os.getenv('WEBHOOK_URL', 'http://localhost:5001/webhook/cad')
-            
             file_content = uploaded_file.getvalue()
             file_base64 = base64.b64encode(file_content).decode('utf-8')
             
-            # Use JSON approach like Django backend does for webhooks
+            # Prepare payload for n8n workflow
             webhook_payload = {
                 'data': file_base64,
                 'session_id': session_id,
-                'filename': uploaded_file.name,
-                'webhook_url': webhook_url
+                'filename': uploaded_file.name
             }
             
             # Debug logging
@@ -780,11 +776,24 @@ def engineering_assistant(db_engine):
                         # The data is already a dict, not a JSON string
                         db_data = row[0]  # row[0] is already the dict
                         
-                        # Convert database format to display format
-                        # Database has: {"dimension": "base64_csv", "matching": "base64_csv", "session_id": "uuid"}
-                        # Display expects: [{"dimension": "base64_csv", "matching": "base64_csv", "session_id": "uuid"}]
+                        # Handle nested data structure from n8n
+                        # n8n stores data as: {"data": {"data": [{"dimension": "...", "matching": "..."}]}}
+                        # We need to extract the actual data from the nested structure
+                        if isinstance(db_data, dict) and "data" in db_data:
+                            # Check if data.data is a list
+                            if isinstance(db_data.get("data"), dict) and isinstance(db_data["data"].get("data"), list):
+                                # Extract the actual data from n8n's nested structure
+                                actual_data = db_data["data"]["data"][0]  # Get first item from the data array
+                                results_list = [actual_data]
+                            elif isinstance(db_data.get("data"), list):
+                                # Data is already in correct format
+                                results_list = db_data["data"]
+                            else:
+                                results_list = [db_data]
+                        else:
+                            # No nesting, use data as-is
+                            results_list = [db_data]
                         
-                        results_list = [db_data]  # Wrap in list for display_base64_results
                         return {
                             "status": "completed",
                             "results": results_list
@@ -807,7 +816,7 @@ def engineering_assistant(db_engine):
     
     # Test button to simulate results with existing session ID
     if st.button("🧪 Test with Existing Session ID", type="secondary"):
-        test_session_id = "8f0101e0-aa1f-4f95-81a9-52a629b92f03"
+        test_session_id = "a363060a-fc8a-4264-b8d3-9c78531b5793"
         st.info(f"Testing with session ID: {test_session_id}")
         
         # Query the database for this specific session
@@ -827,8 +836,17 @@ def engineering_assistant(db_engine):
                     # The data is already a dict, not a JSON string
                     db_data = row[0]  # row[0] is already the dict
                     
-                    # Convert database format to display format
-                    results_list = [db_data]  # Wrap in list for display_base64_results
+                    # Handle nested data structure from n8n (same as poll function)
+                    if isinstance(db_data, dict) and "data" in db_data:
+                        if isinstance(db_data.get("data"), dict) and isinstance(db_data["data"].get("data"), list):
+                            actual_data = db_data["data"]["data"][0]
+                            results_list = [actual_data]
+                        elif isinstance(db_data.get("data"), list):
+                            results_list = db_data["data"]
+                        else:
+                            results_list = [db_data]
+                    else:
+                        results_list = [db_data]
                     
                     # Save to session state
                     st.session_state.cad_results = results_list

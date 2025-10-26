@@ -3,7 +3,5 @@ requests
 requests-toolbelt
 pandas
 python-dotenv
-Flask
 psycopg2-binary
-gunicorn
 SQLAlchemy

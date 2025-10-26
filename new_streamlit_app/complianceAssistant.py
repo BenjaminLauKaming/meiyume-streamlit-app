@@ -14,19 +14,15 @@ N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/62280c
 def submit_to_n8n(uploaded_file, session_id):
     """Submits the file and session_id to the n8n workflow."""
     try:
-        # Get webhook URL - use ngrok URL if available, otherwise localhost
-        webhook_url = os.getenv('WEBHOOK_URL', 'http://localhost:5001/webhook/compliance')
-        
         # Convert file to base64 for JSON webhook
         file_content = uploaded_file.getvalue()
         file_base64 = base64.b64encode(file_content).decode('utf-8')
         
-        # Create webhook payload with base64 encoded file
+        # Prepare payload for n8n workflow
         webhook_payload = {
             'data': file_base64,
             'session_id': session_id,
-            'filename': uploaded_file.name,
-            'webhook_url': webhook_url  # Tell n8n where to send results
+            'filename': uploaded_file.name
         }
         
         # Debug logging
