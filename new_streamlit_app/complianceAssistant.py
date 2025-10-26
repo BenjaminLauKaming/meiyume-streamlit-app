@@ -66,8 +66,21 @@ def poll_for_db_results(session_id, agent_type, db_engine):
         with db_engine.connect() as connection:
             result = connection.execute(stmt, {"session_id": session_id, "agent_type": agent_type}).fetchone()
         if result:
+            # Handle nested data structure from n8n (same as CAD workflow)
+            db_data = result[0]
+            if isinstance(db_data, dict) and "data" in db_data:
+                if isinstance(db_data.get("data"), dict) and isinstance(db_data["data"].get("data"), list):
+                    actual_data = db_data["data"]["data"][0]
+                    extracted_data = actual_data
+                elif isinstance(db_data.get("data"), list):
+                    extracted_data = db_data["data"]
+                else:
+                    extracted_data = db_data
+            else:
+                extracted_data = db_data
+            
             status_placeholder.success("✅ Analysis complete!")
-            return result[0]
+            return extracted_data
         status_placeholder.info(f"🔄 Awaiting results... (Attempt {attempt + 1}/{max_attempts})")
         time.sleep(2)
     status_placeholder.warning("⏱️ Polling timed out.")
@@ -83,14 +96,14 @@ def compliance_assistant(db_engine):
         
     # Test button to simulate results with existing session ID
     if st.button("🧪 Test with Existing Session ID", type="secondary"):
-        test_session_id = "your-test-session-id-here"  # Replace with a real session ID once you have one
+        test_session_id = "94891177-6c2f-466a-be23-8efe139182c9"
         st.info(f"Testing with session ID: {test_session_id}")
         
         # Query the database for this specific session
         try:
             query = text("""
                 SELECT data FROM results 
-                WHERE session_id = :session_id AND agent_type = 'compliance'
+                WHERE session_id = :session_id AND agent_type = 'com'
                 ORDER BY created_at DESC 
                 LIMIT 1
             """)
@@ -103,11 +116,23 @@ def compliance_assistant(db_engine):
                     # The data is already a dict, not a JSON string
                     result_data = row[0]  # row[0] is already the dict
                     
+                    # Handle nested data structure from n8n
+                    if isinstance(result_data, dict) and "data" in result_data:
+                        if isinstance(result_data.get("data"), dict) and isinstance(result_data["data"].get("data"), list):
+                            actual_data = result_data["data"]["data"][0]
+                            extracted_data = actual_data
+                        elif isinstance(result_data.get("data"), list):
+                            extracted_data = result_data["data"]
+                        else:
+                            extracted_data = result_data
+                    else:
+                        extracted_data = result_data
+                    
                     # Save to session state
                     st.session_state.compliance_current = {
                         "filename": "Test File.pdf",
                         "status": "completed",
-                        "results": result_data
+                        "results": extracted_data
                     }
                     
                     st.success("✅ Test data loaded successfully!")
@@ -129,7 +154,7 @@ def compliance_assistant(db_engine):
                 "status": "processing"
             }
             if submit_to_n8n(uploaded_file, session_id):
-                result_data = poll_for_db_results(session_id, 'compliance', db_engine)
+                result_data = poll_for_db_results(session_id, 'com', db_engine)
                 if result_data:
                     st.session_state.compliance_current['status'] = 'completed'
                 st.session_state.compliance_current['results'] = result_data
@@ -160,29 +185,43 @@ def display_compliance_result(record):
         with tabs[0]:
             st.markdown("#### Summary of Compliance Analysis")
             
-            # Display key metrics if available
+            # Display compliance findings
             if isinstance(results_data, dict):
-                # Extract key metrics if they exist
-                product_name = results_data.get("product_name", "Not specified")
-                compliance_status = results_data.get("compliance_status", "Unknown")
-                risk_level = results_data.get("risk_level", "Not assessed")
-                
-                # Create metrics
-                metric_cols = st.columns(3)
-                with metric_cols[0]:
-                    st.metric("Product", product_name)
-                with metric_cols[1]:
-                    status_color = "🟢" if compliance_status == "Compliant" else "🔴" if compliance_status == "Non-compliant" else "🟡"
-                    st.metric("Compliance Status", f"{status_color} {compliance_status}")
-                with metric_cols[2]:
-                    risk_color = "🟢" if risk_level == "Low" else "🟡" if risk_level == "Medium" else "🔴" if risk_level == "High" else "⚪"
-                    st.metric("Risk Level", f"{risk_color} {risk_level}")
-                
-                # Display key findings if available
-                if "findings" in results_data and isinstance(results_data["findings"], list):
-                    st.markdown("#### Key Findings")
-                    for i, finding in enumerate(results_data["findings"]):
-                        st.markdown(f"**{i+1}.** {finding}")
+                # Check if we have an "output" field (from n8n workflow)
+                if "output" in results_data:
+                    output = results_data.get("output", "")
+                    
+                    # Display the compliance findings
+                    st.markdown("#### Compliance Findings")
+                    # Split the output by line and display each finding
+                    findings = [f.strip() for f in output.split('\n') if f.strip()]
+                    for finding in findings:
+                        if finding.startswith('-'):
+                            finding = finding[1:]  # Remove leading dash
+                        if finding:
+                            st.markdown(f"• {finding}")
+                else:
+                    # Try to extract key metrics if they exist (old format)
+                    product_name = results_data.get("product_name", "Not specified")
+                    compliance_status = results_data.get("compliance_status", "Unknown")
+                    risk_level = results_data.get("risk_level", "Not assessed")
+                    
+                    # Create metrics
+                    metric_cols = st.columns(3)
+                    with metric_cols[0]:
+                        st.metric("Product", product_name)
+                    with metric_cols[1]:
+                        status_color = "🟢" if compliance_status == "Compliant" else "🔴" if compliance_status == "Non-compliant" else "🟡"
+                        st.metric("Compliance Status", f"{status_color} {compliance_status}")
+                    with metric_cols[2]:
+                        risk_color = "🟢" if risk_level == "Low" else "🟡" if risk_level == "Medium" else "🔴" if risk_level == "High" else "⚪"
+                        st.metric("Risk Level", f"{risk_color} {risk_level}")
+                    
+                    # Display key findings if available
+                    if "findings" in results_data and isinstance(results_data["findings"], list):
+                        st.markdown("#### Key Findings")
+                        for i, finding in enumerate(results_data["findings"]):
+                            st.markdown(f"**{i+1}.** {finding}")
             else:
                 st.info("No structured summary data available.")
         
