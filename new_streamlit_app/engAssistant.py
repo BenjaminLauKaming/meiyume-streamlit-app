@@ -22,7 +22,7 @@ except ImportError:
 load_dotenv()
 
 # n8n workflow URL for CAD analysis - using webhook endpoint
-N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/3c737ba6-d463-4e54-9cd4-addadca410b4"
+N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/3c737ba6-d463-4e54-9cd4-addadca410b4"
 
 def display_results_spreadsheet(results_data):
     """Display CAD analysis results in a beautiful spreadsheet format"""

@@ -9,7 +9,7 @@ import uuid
 from sqlalchemy import text
 
 # This URL is for the n8n workflow webhook endpoint
-N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/62280c29-7f88-4e1c-9e2b-ec308fff4b8d"
+N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/62280c29-7f88-4e1c-9e2b-ec308fff4b8d"
 
 def submit_to_n8n(uploaded_file, session_id):
     """Submits the file and session_id to the n8n workflow."""

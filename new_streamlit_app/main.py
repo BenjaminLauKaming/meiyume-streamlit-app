@@ -21,8 +21,9 @@ if not DATABASE_URL:
     
     1. Create a `.env` file in the project root
     2. Add your Supabase connection string
-    
-    See `env.example` for the template.
+    3. Run `pip install -r requirements.txt`
+
+    See `README.md` for the template.
     """)
     st.stop()
 
@@ -84,11 +85,6 @@ def main():
     )
     st.sidebar.title("🎯 Navigation")
 
-    st.sidebar.info("""
-    **Setup Required:**
-    1. Configure `.env` file with Supabase credentials
-    2. Run `streamlit run main.py`
-    """)
 
     page = st.sidebar.selectbox(
         "Choose an Assistant",
@@ -106,7 +102,7 @@ def main():
         qualityRagChat.quality_rag_chat()
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("**Version:** 5.0.0 (Supabase)")
+    st.sidebar.markdown("**Version:** 5.1.0")
     st.sidebar.markdown("**Powered by:** Meiyume AI")
 
 if __name__ == "__main__":
