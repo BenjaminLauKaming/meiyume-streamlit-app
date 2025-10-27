@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-import json
 from datetime import datetime
 
 # Please fill in your n8n webhook URL for the RAG chat

@@ -1,7 +1,7 @@
 streamlit
 requests
-requests-toolbelt
 pandas
 python-dotenv
 psycopg2-binary
 SQLAlchemy
+openpyxl
