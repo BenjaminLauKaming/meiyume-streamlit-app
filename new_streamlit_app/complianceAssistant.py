@@ -11,9 +11,14 @@ from sqlalchemy import text
 # This URL is for the n8n workflow webhook endpoint
 N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/62280c29-7f88-4e1c-9e2b-ec308fff4b8d"
 
-def submit_to_n8n(uploaded_file, session_id):
-    """Submits the file and session_id to the n8n workflow."""
+def submit_to_n8n_and_poll(uploaded_file, session_id, db_engine):
+    """Submit file to n8n and poll for results from database."""
+    progress_bar = st.progress(0)
+    status_container = st.empty()
     try:
+        status_container.info("Submitting file to n8n workflow...")
+        progress_bar.progress(0.2)
+        
         # Convert file to base64 for JSON webhook
         file_content = uploaded_file.getvalue()
         file_base64 = base64.b64encode(file_content).decode('utf-8')
@@ -27,13 +32,10 @@ def submit_to_n8n(uploaded_file, session_id):
         
         # Debug logging
         print(f"DEBUG: Sending to n8n webhook - URL: {N8N_COMPLIANCE_WORKFLOW_URL}")
-        print(f"DEBUG: Payload keys: {list(webhook_payload.keys())}")
         print(f"DEBUG: File name: {uploaded_file.name}")
         print(f"DEBUG: Session ID: {session_id}")
         print(f"DEBUG: File size: {len(file_content)} bytes")
-        print(f"DEBUG: Base64 size: {len(file_base64)} chars")
         
-        # Send as JSON with proper headers
         response = requests.post(
             N8N_COMPLIANCE_WORKFLOW_URL,
             json=webhook_payload,
@@ -44,46 +46,58 @@ def submit_to_n8n(uploaded_file, session_id):
             timeout=60
         )
         
-        # Debug response
         print(f"DEBUG: Response status: {response.status_code}")
-        print(f"DEBUG: Response text: {response.text[:200]}...")
-        if response.status_code == 200:
-            st.success("File submitted successfully! Waiting for results.")
-            return True
+        
+        if response.status_code not in [200, 201]:
+            status_container.error(f"Submission failed: {response.status_code}")
+            return None
+
+        status_container.info("File submitted. Awaiting results...")
+        progress_bar.progress(0.5)
+        
+        result_data = poll_for_db_results(session_id, 'com', db_engine)
+        
+        if result_data:
+            status_container.success("Analysis completed!")
+            progress_bar.progress(1.0)
+            return result_data
         else:
-            st.error(f"Workflow submission failed: {response.status_code} - {response.text}")
-            return False
+            status_container.warning("Processing timed out or failed.")
+            return None
+            
     except Exception as e:
-        st.error(f"An error occurred during submission: {e}")
-        return False
+        status_container.error(f"An error occurred: {e}")
+        return None
 
 def poll_for_db_results(session_id, agent_type, db_engine):
     """Polls the database for a result matching the session_id and agent_type."""
     max_attempts = 90
-    status_placeholder = st.empty()
     stmt = text("SELECT data FROM results WHERE session_id = :session_id AND agent_type = :agent_type")
     for attempt in range(max_attempts):
-        with db_engine.connect() as connection:
-            result = connection.execute(stmt, {"session_id": session_id, "agent_type": agent_type}).fetchone()
-        if result:
-            # Handle nested data structure from n8n (same as CAD workflow)
-            db_data = result[0]
-            if isinstance(db_data, dict) and "data" in db_data:
-                if isinstance(db_data.get("data"), dict) and isinstance(db_data["data"].get("data"), list):
-                    actual_data = db_data["data"]["data"][0]
-                    extracted_data = actual_data
-                elif isinstance(db_data.get("data"), list):
-                    extracted_data = db_data["data"]
+        time.sleep(2)  # Wait before checking
+        try:
+            with db_engine.connect() as connection:
+                result = connection.execute(stmt, {"session_id": session_id, "agent_type": agent_type}).fetchone()
+            
+            if result:
+                # Handle nested data structure from n8n (same as CAD workflow)
+                db_data = result[0]
+                if isinstance(db_data, dict) and "data" in db_data:
+                    if isinstance(db_data.get("data"), dict) and isinstance(db_data["data"].get("data"), list):
+                        actual_data = db_data["data"]["data"][0]
+                        extracted_data = actual_data
+                    elif isinstance(db_data.get("data"), list):
+                        extracted_data = db_data["data"]
+                    else:
+                        extracted_data = db_data
                 else:
                     extracted_data = db_data
-            else:
-                extracted_data = db_data
+                
+                return extracted_data
+        except Exception as e:
+            print(f"Database query error: {e}")
+            continue
             
-            status_placeholder.success("✅ Analysis complete!")
-            return extracted_data
-        status_placeholder.info(f"🔄 Awaiting results... (Attempt {attempt + 1}/{max_attempts})")
-        time.sleep(2)
-    status_placeholder.warning("⏱️ Polling timed out.")
     return None
 
 def compliance_assistant(db_engine):
@@ -148,17 +162,14 @@ def compliance_assistant(db_engine):
     if uploaded_file is not None:
         if st.button("🚀 Submit for Compliance Check", type="primary"):
             session_id = str(uuid.uuid4())
-            st.info(f"Analysis started with session ID: {session_id}")
             st.session_state.compliance_current = {
                 "filename": uploaded_file.name,
                 "status": "processing"
             }
-            if submit_to_n8n(uploaded_file, session_id):
-                result_data = poll_for_db_results(session_id, 'com', db_engine)
-                if result_data:
-                    st.session_state.compliance_current['status'] = 'completed'
+            result_data = submit_to_n8n_and_poll(uploaded_file, session_id, db_engine)
+            if result_data:
+                st.session_state.compliance_current['status'] = 'completed'
                 st.session_state.compliance_current['results'] = result_data
-                # No longer need to force a rerun, Streamlit will update automatically.
 
     if st.session_state.compliance_current:
         display_compliance_result(st.session_state.compliance_current)

@@ -1,319 +1,18 @@
 import streamlit as st
 import requests
 import json
-import os
 import time
 import pandas as pd
-from datetime import datetime, timezone
 from io import BytesIO, StringIO
 from dotenv import load_dotenv
 import uuid
 import base64
 from sqlalchemy import text
 
-# Try to import MultipartEncoder, fallback to manual multipart if not available
-try:
-    from requests_toolbelt import MultipartEncoder
-    HAS_MULTIPART_ENCODER = True
-except ImportError:
-    HAS_MULTIPART_ENCODER = False
-    print("Warning: requests_toolbelt not available, using fallback multipart method")
-
 load_dotenv()
 
 # n8n workflow URL for CAD analysis - using webhook endpoint
 N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/3c737ba6-d463-4e54-9cd4-addadca410b4"
-
-def display_results_spreadsheet(results_data):
-    """Display CAD analysis results in a beautiful spreadsheet format"""
-    st.subheader("📈 Analysis Results - Spreadsheet View")
-    
-    # Create tabs for different result types
-    tabs = st.tabs(["📊 Parts & Dimensions", "🔗 Part Relationships", "📋 Summary", "📥 Downloads"])
-    
-    with tabs[0]:
-        st.markdown("### 📏 Parts and Dimensions Analysis")
-        
-        # Find the dimensions result
-        dimensions_result = None
-        for result in results_data.get("results", []):
-            if result.get("result_type") == "dimensions":
-                dimensions_result = result
-                break
-        
-        if dimensions_result and "parts" in dimensions_result.get("raw_data", {}):
-            parts_data = dimensions_result["raw_data"]["parts"]
-            
-            # Create a comprehensive dataframe for all parts and dimensions
-            all_dimensions = []
-            
-            for part in parts_data:
-                part_name = part.get("name", "Unknown Part")
-                dimensions = part.get("dimensions", [])
-                
-                for dim in dimensions:
-                    all_dimensions.append({
-                        "Part Name": part_name,
-                        "Feature": dim.get("name", ""),
-                        "Value": dim.get("value", ""),
-                        "Tolerance": dim.get("tolerance", ""),
-                        "Unit": dim.get("unit", ""),
-                        "Critical": "✅" if dim.get("critical", False) else "❌"
-                    })
-            
-            if all_dimensions:
-                df = pd.DataFrame(all_dimensions)
-                
-                # Display the dataframe with styling
-                st.dataframe(
-                    df,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "Part Name": st.column_config.TextColumn("Part Name", width="medium"),
-                        "Feature": st.column_config.TextColumn("Feature", width="large"),
-                        "Value": st.column_config.NumberColumn("Value", format="%.3f"),
-                        "Tolerance": st.column_config.TextColumn("Tolerance", width="small"),
-                        "Unit": st.column_config.TextColumn("Unit", width="small"),
-                        "Critical": st.column_config.TextColumn("Critical", width="small")
-                    }
-                )
-                
-                # Add filters and search
-                st.markdown("---")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    part_filter = st.selectbox(
-                        "Filter by Part",
-                        ["All Parts"] + list(df["Part Name"].unique())
-                    )
-                
-                with col2:
-                    critical_only = st.checkbox("Show Critical Dimensions Only")
-                
-                # Apply filters
-                filtered_df = df.copy()
-                if part_filter != "All Parts":
-                    filtered_df = filtered_df[filtered_df["Part Name"] == part_filter]
-                if critical_only:
-                    filtered_df = filtered_df[filtered_df["Critical"] == "✅"]
-                
-                if len(filtered_df) != len(df):
-                    st.markdown(f"**Showing {len(filtered_df)} of {len(df)} dimensions**")
-                    st.dataframe(filtered_df, use_container_width=True, hide_index=True)
-                
-                # Summary statistics
-                st.markdown("---")
-                st.markdown("### 📊 Summary Statistics")
-                
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    st.metric("Total Parts", len(parts_data))
-                
-                with col2:
-                    st.metric("Total Dimensions", len(all_dimensions))
-                
-                with col3:
-                    critical_count = len([d for d in all_dimensions if d["Critical"] == "✅"])
-                    st.metric("Critical Dimensions", critical_count)
-                
-                with col4:
-                    interior_count = len([d for d in all_dimensions if d["Critical"] == "❌"])
-                    st.metric("Non-Critical Dimensions", interior_count)
-                
-            else:
-                st.info("No dimension data available")
-        else:
-            st.info("No dimension data available")
-    
-    with tabs[1]:
-        st.markdown("### 🔗 Part Relationships & Fits")
-        
-        if dimensions_result and "contact_pairs" in dimensions_result.get("raw_data", {}):
-            contact_pairs = dimensions_result["raw_data"]["contact_pairs"]
-            
-            if contact_pairs:
-                # Create relationship dataframe
-                relationships = []
-                
-                for pair in contact_pairs:
-                    relationships.append({
-                        "Part A": pair.get("part1", ""),
-                        "Part B": pair.get("part2", ""),
-                        "Contact Type": pair.get("contact_type", ""),
-                        "Fit Status": pair.get("fit_status", ""),
-                        "Clearance": f"{pair.get('clearance', '0')} {pair.get('unit', '')}"
-                    })
-                
-                rel_df = pd.DataFrame(relationships)
-                
-                # Display with styling
-                st.dataframe(
-                    rel_df,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "Part A": st.column_config.TextColumn("Part A", width="medium"),
-                        "Part B": st.column_config.TextColumn("Part B", width="medium"),
-                        "Contact Type": st.column_config.TextColumn("Contact Type", width="large"),
-                        "Fit Status": st.column_config.TextColumn("Fit Status", width="large"),
-                        "Clearance": st.column_config.TextColumn("Clearance", width="small")
-                    }
-                )
-                
-                # Fit status summary
-                st.markdown("---")
-                st.markdown("### 🎯 Fit Analysis Summary")
-                
-                fit_counts = rel_df["Fit Status"].value_counts()
-                
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    compatible = fit_counts.get("Good Fit", 0)
-                    st.metric("✅ Good Fit", compatible)
-                
-                with col2:
-                    tight = fit_counts.get("Tight Fit", 0)
-                    st.metric("⚠️ Tight Fit", tight)
-                
-                with col3:
-                    loose = fit_counts.get("Loose Fit", 0)
-                    st.metric("❌ Loose Fit", loose)
-                
-                with col4:
-                    perfect = fit_counts.get("Perfect Fit", 0)
-                    st.metric("🎯 Perfect Fit", perfect)
-                
-            else:
-                st.info("No part relationships detected")
-        else:
-            st.info("No relationship data available")
-    
-    with tabs[2]:
-        st.markdown("### 📋 Analysis Summary")
-        
-        if dimensions_result:
-            # Extract summary data
-            parts_data = dimensions_result["raw_data"].get("parts", [])
-            contact_pairs = dimensions_result["raw_data"].get("contact_pairs", [])
-            
-            # Create summary metrics
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown("#### 📏 Dimension Summary")
-                
-                total_dimensions = sum(len(part.get("dimensions", [])) for part in parts_data)
-                critical_dimensions = sum(
-                    sum(1 for dim in part.get("dimensions", []) if dim.get("critical", False))
-                    for part in parts_data
-                )
-                
-                st.metric("Total Parts Analyzed", len(parts_data))
-                st.metric("Total Dimensions", total_dimensions)
-                st.metric("Critical Dimensions", critical_dimensions)
-                st.metric("Part Relationships", len(contact_pairs))
-            
-            with col2:
-                st.markdown("#### 🎯 Quality Metrics")
-                
-                if total_dimensions > 0:
-                    critical_percentage = (critical_dimensions / total_dimensions) * 100
-                    st.metric("Critical Dimension %", f"{critical_percentage:.1f}%")
-                
-                if contact_pairs:
-                    compatible_pairs = sum(1 for pair in contact_pairs if pair.get("fit_status") == "Good Fit")
-                    compatibility_rate = (compatible_pairs / len(contact_pairs)) * 100
-                    st.metric("Compatibility Rate", f"{compatibility_rate:.1f}%")
-            
-            # Part breakdown
-            st.markdown("---")
-            st.markdown("#### 📊 Part Breakdown")
-            
-            if parts_data:
-                part_summary = []
-                for part in parts_data:
-                    part_name = part.get("name", "Unknown")
-                    dimensions = part.get("dimensions", [])
-                    critical_count = sum(1 for dim in dimensions if dim.get("critical", False))
-                    
-                    part_summary.append({
-                        "Part Name": part_name,
-                        "Total Dimensions": len(dimensions),
-                        "Critical Dimensions": critical_count,
-                        "Features": ", ".join([dim.get("name", "") for dim in dimensions[:3]]) + ("..." if len(dimensions) > 3 else "")
-                    })
-                
-                summary_df = pd.DataFrame(part_summary)
-                st.dataframe(summary_df, use_container_width=True, hide_index=True)
-    
-    with tabs[3]:
-        st.subheader("📥 Download Results")
-        
-        if dimensions_result:
-            # Generate downloadable files
-            
-            # Create dimensions CSV
-            if "parts" in dimensions_result["raw_data"]:
-                all_dimensions = []
-                for part in dimensions_result["raw_data"]["parts"]:
-                    part_name = part.get("name", "Unknown Part")
-                    for dim in part.get("dimensions", []):
-                        all_dimensions.append({
-                            "Part Name": part_name,
-                            "Feature": dim.get("name", ""),
-                            "Value": dim.get("value", ""),
-                            "Tolerance": dim.get("tolerance", ""),
-                            "Unit": dim.get("unit", ""),
-                            "Critical": dim.get("critical", False)
-                        })
-                
-                if all_dimensions:
-                    df_dimensions = pd.DataFrame(all_dimensions)
-                    csv_buffer = BytesIO()
-                    df_dimensions.to_csv(csv_buffer, index=False)
-                    csv_buffer.seek(0)
-                    
-                    st.download_button(
-                        label="📊 Download Dimensions (CSV)",
-                        data=csv_buffer.getvalue(),
-                        file_name="cad_dimensions.csv",
-                        mime="text/csv"
-                    )
-            
-            # Create relationships CSV
-            if "contact_pairs" in dimensions_result["raw_data"]:
-                relationships = dimensions_result["raw_data"]["contact_pairs"]
-                if relationships:
-                    df_relationships = pd.DataFrame(relationships)
-                    csv_buffer = BytesIO()
-                    df_relationships.to_csv(csv_buffer, index=False)
-                    csv_buffer.seek(0)
-                    
-                    st.download_button(
-                        label="🔗 Download Relationships (CSV)",
-                        data=csv_buffer.getvalue(),
-                        file_name="cad_relationships.csv",
-                        mime="text/csv"
-                    )
-            
-            # Download full JSON report
-            json_buffer = BytesIO()
-            json_str = json.dumps(dimensions_result["raw_data"], indent=2)
-            json_buffer.write(json_str.encode('utf-8'))
-            json_buffer.seek(0)
-            
-            st.download_button(
-                label="📄 Download Full Report (JSON)",
-                data=json_buffer.getvalue(),
-                file_name="cad_analysis_report.json",
-                mime="application/json"
-            )
-        
-        st.info("💡 Tip: Use the CSV files to import data into Excel or other spreadsheet applications for further analysis.")
 
 def display_base64_results(results_list, expected_session_id=None):
     """Decode base64 CSV results and display as dataframes, filtering by session_id"""
@@ -692,7 +391,7 @@ def display_base64_results(results_list, expected_session_id=None):
 
 def engineering_assistant(db_engine):
     """Engineering Assistant main interface"""
-    def submit_to_n8n_and_poll(uploaded_file, session_id):
+    def submit_to_n8n_and_poll(uploaded_file, session_id, db_engine):
         """Submit file to n8n and poll for results from database."""
         progress_bar = st.progress(0)
         status_container = st.empty()
@@ -739,7 +438,7 @@ def engineering_assistant(db_engine):
             status_container.info("File submitted. Awaiting results...")
             progress_bar.progress(0.5)
             
-            result_data = poll_for_cad_results_from_db(db_engine, session_id)
+            result_data = poll_for_cad_results_from_db(session_id, db_engine)
             
             if result_data:
                 status_container.success("Analysis completed!")
@@ -753,7 +452,7 @@ def engineering_assistant(db_engine):
             status_container.error(f"An error occurred: {e}")
             return None
 
-    def poll_for_cad_results_from_db(db_engine, session_id):
+    def poll_for_cad_results_from_db(session_id, db_engine):
         """Polls the database for results from n8n webhook."""
         max_attempts = 180  # Poll for 3 minutes (90 * 2s)
         
@@ -813,6 +512,8 @@ def engineering_assistant(db_engine):
         st.session_state.cad_results = None
     if 'cad_session_id' not in st.session_state:
         st.session_state.cad_session_id = None
+    if 'cad_current' not in st.session_state:
+        st.session_state.cad_current = None
     
     # Test button to simulate results with existing session ID
     if st.button("🧪 Test with Existing Session ID", type="secondary"):
@@ -879,58 +580,42 @@ def engineering_assistant(db_engine):
             st.success(f"File uploaded: {uploaded_file.name}")
             st.info(f"File size: {uploaded_file.size / 1024:.2f} KB")
             
-            # Minimal metadata defaults (optional fields removed per request)
-            project_name = ""
-            drawing_number = ""
-            revision = ""
-            priority = "Medium"
-            notes = ""
-            
-            
             # Single analysis button when file is uploaded
             if st.button("🚀 Start Analysis", type="primary", use_container_width=True):
-                metadata = {
-                    "project_name": project_name,
-                    "drawing_number": drawing_number,
-                    "revision": revision,
-                    "priority": priority,
-                    "notes": notes
+                # Generate a fresh session_id per upload and keep for matching
+                session_id = str(uuid.uuid4())
+                
+                # Save to session state
+                st.session_state.cad_current = {
+                    "filename": uploaded_file.name,
+                    "status": "processing",
+                    "session_id": session_id
                 }
                 
-                with st.spinner("Uploading file and starting analysis..."):
-                    # Generate a fresh session_id per upload and keep for matching
-                    session_id = str(uuid.uuid4())
-                    st.info(f"Tracking session: {session_id}")
-                    result = submit_to_n8n_and_poll(uploaded_file, session_id)
-                    if result:
-                        st.success("File uploaded successfully!")
-                        task_id = result.get("task_id") or result.get("id")
-                        # Update history
-                        if 'upload_history' not in st.session_state:
-                            st.session_state.upload_history = []
-                        st.session_state.upload_history.append({
-                            "task_id": task_id,
-                            "filename": uploaded_file.name,
-                            "timestamp": time.time(),
-                            "status": "completed" if result.get("status") == "completed" else result.get("status", "processing"),
-                            "project_name": project_name,
-                            "priority": priority
-                        })
-                        # Display results (base64 CSVs only)
-                        results_list = result.get("results")
-                        if result.get("status") == "completed" and isinstance(results_list, list):
-                            # Save to session state so UI interactions don't clear the view
-                            st.session_state.cad_results = results_list
-                            st.session_state.cad_session_id = session_id
-                        else:
-                            st.info("Completed, but no base64 CSV results to display.")
-                    else:
-                        st.info("Analysis completed but no results available yet.")
+                result = submit_to_n8n_and_poll(uploaded_file, session_id, db_engine)
+                
+                if result:
+                    results_list = result.get("results")
+                    if isinstance(results_list, list):
+                        st.session_state.cad_results = results_list
+                        st.session_state.cad_session_id = session_id
+                        st.session_state.cad_current['status'] = 'completed'
+                        st.session_state.cad_current['results'] = results_list
         
         else:
             # Show message when no file is uploaded
             st.info("👆 Upload a PDF file above to start analysis!")
         
+    # Display submission status if available
+    if st.session_state.cad_current:
+        st.markdown("---")
+        st.markdown("### 📄 Submission Status")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("File", st.session_state.cad_current["filename"])
+        with col2:
+            st.metric("Status", st.session_state.cad_current["status"].title())
+    
     # Always display last results if available (keeps tables visible during filter interactions)
     if st.session_state.cad_results:
         display_base64_results(st.session_state.cad_results, expected_session_id=st.session_state.cad_session_id)
