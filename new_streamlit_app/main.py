@@ -62,7 +62,6 @@ if 'db_initialized' not in st.session_state:
 # --- Streamlit App ---
 
 import engAssistant
-import esgAssistant
 import complianceAssistant
 import qualityRagChat
 
@@ -93,7 +92,7 @@ def main():
 
     page = st.sidebar.selectbox(
         "Choose an Assistant",
-        ["CAD Analysis", "ESG Analysis", "Compliance Checker", "Quality RAG Chat"],
+        ["CAD Analysis", "Compliance Checker", "Quality RAG Chat"],
     )
 
     # Pass the database engine to the assistants
@@ -101,8 +100,6 @@ def main():
 
     if page == "CAD Analysis":
         engAssistant.engineering_assistant(db_engine)
-    elif page == "ESG Analysis":
-        esgAssistant.esg_assistant(db_engine)
     elif page == "Compliance Checker":
         complianceAssistant.compliance_assistant(db_engine)
     elif page == "Quality RAG Chat":
