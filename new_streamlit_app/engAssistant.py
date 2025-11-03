@@ -7,11 +7,12 @@ from dotenv import load_dotenv
 import uuid
 import base64
 from sqlalchemy import text
+from pypdf import PdfReader, PdfWriter
 
 load_dotenv()
 
 # n8n workflow URL for CAD analysis - using webhook endpoint
-N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/3c737ba6-d463-4e54-9cd4-addadca410b4"
+N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/dcd53389-3d85-469d-840e-35ecae130592"
 
 def display_base64_results(results_list, expected_session_id=None):
     """Decode base64 CSV results and display as dataframes, filtering by session_id"""
@@ -395,26 +396,61 @@ def engineering_assistant(db_engine):
         progress_bar = st.progress(0)
         status_container = st.empty()
         try:
-            status_container.info("Submitting file to n8n workflow...")
-            progress_bar.progress(0.2)
+            status_container.info("Processing PDF and splitting pages...")
+            progress_bar.progress(0.1)
             
             file_content = uploaded_file.getvalue()
             file_base64 = base64.b64encode(file_content).decode('utf-8')
             
-            # Prepare payload for n8n workflow
+            # Split PDF into individual pages
+            status_container.info("Splitting PDF into pages...")
+            progress_bar.progress(0.15)
+            
+            pdf_reader = PdfReader(BytesIO(file_content))
+            total_pages = len(pdf_reader.pages)
+            
+            pages_data = []
+            for page_num in range(total_pages):
+                # Create a new PDF with just this page
+                pdf_writer = PdfWriter()
+                pdf_writer.add_page(pdf_reader.pages[page_num])
+                
+                # Write single page to bytes
+                page_buffer = BytesIO()
+                pdf_writer.write(page_buffer)
+                page_buffer.seek(0)
+                page_bytes = page_buffer.read()
+                
+                # Encode page to base64
+                page_base64 = base64.b64encode(page_bytes).decode('utf-8')
+                pages_data.append({
+                    'page_number': page_num + 1,
+                    'data': page_base64,
+                    'filename': f"page_{page_num + 1}_{uploaded_file.name}"
+                })
+            
+            status_container.info("Submitting full document and pages to n8n workflow...")
+            progress_bar.progress(0.2)
+            
+            # Prepare payload for n8n workflow - include full document and pages
             webhook_payload = {
-                'data': file_base64,
-                'session_id': session_id,
-                'filename': uploaded_file.name
+                'full_document': {
+                    'data': file_base64,
+                    'filename': uploaded_file.name,
+                    'page_count': total_pages
+                },
+                'pages': pages_data,
+                'session_id': session_id
             }
             
             # Debug logging
             print(f"DEBUG: Sending to n8n webhook - URL: {N8N_CAD_WORKFLOW_URL}")
             print(f"DEBUG: Payload keys: {list(webhook_payload.keys())}")
             print(f"DEBUG: File name: {uploaded_file.name}")
+            print(f"DEBUG: Total pages: {total_pages}")
             print(f"DEBUG: Session ID: {session_id}")
-            print(f"DEBUG: File size: {len(file_content)} bytes")
-            print(f"DEBUG: Base64 size: {len(file_base64)} chars")
+            print(f"DEBUG: Full document size: {len(file_content)} bytes")
+            print(f"DEBUG: Number of pages to send: {len(pages_data)}")
             
             response = requests.post(
                 N8N_CAD_WORKFLOW_URL,
