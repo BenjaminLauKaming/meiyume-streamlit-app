@@ -3,12 +3,12 @@ import requests
 import time
 import base64
 import uuid
+from sqlalchemy import text
 import pandas as pd
 from io import StringIO
-from sqlalchemy import text
 
 # This URL is for the n8n workflow webhook endpoint
-N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/62280c29-7f88-4e1c-9e2b-ec308fff4b8d"
+N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/62280c29-7f88-4e1c-9e2b-ec308fff4b8d"
 
 def submit_to_n8n_and_poll(uploaded_file, session_id, db_engine):
     """Submit file to n8n and poll for results from database."""
@@ -81,22 +81,19 @@ def poll_for_db_results(session_id, agent_type, db_engine):
             if result:
                 # Handle nested data structure from n8n
                 db_data = result[0]
+                
+                # Extract data from nested structure: {"data": {"data": [{"data": "base64_csv"}]}}
+                extracted_data = db_data
                 if isinstance(db_data, dict) and "data" in db_data:
-                    if isinstance(db_data.get("data"), dict) and isinstance(db_data["data"].get("data"), list):
-                        # Structure: {"data": {"data": [{"data": "...", "session_id": "..."}]}}
-                        actual_data = db_data["data"]["data"][0]
-                        extracted_data = actual_data
+                    if isinstance(db_data.get("data"), dict) and "data" in db_data["data"]:
+                        inner_data = db_data["data"].get("data")
+                        if isinstance(inner_data, list) and len(inner_data) > 0:
+                            extracted_data = inner_data[0]
+                        elif isinstance(inner_data, str):
+                            extracted_data = {"data": inner_data}
                     elif isinstance(db_data.get("data"), list):
-                        # Structure: {"data": [{"data": "...", "session_id": "..."}]}
-                        # Get first item from the list
                         if len(db_data["data"]) > 0:
                             extracted_data = db_data["data"][0]
-                        else:
-                            extracted_data = db_data
-                    else:
-                        extracted_data = db_data
-                else:
-                    extracted_data = db_data
                 
                 return extracted_data
         except Exception as e:
@@ -115,7 +112,7 @@ def compliance_assistant(db_engine):
         
     # Test button to simulate results with existing session ID
     if st.button("🧪 Test with Existing Session ID", type="secondary"):
-        test_session_id = "29d97aee-191f-4846-af95-89cc4c3a6d6f"
+        test_session_id = "56712908-6de7-4352-8cce-247697839d61"
         st.info(f"Testing with session ID: {test_session_id}")
         
         # Query the database for this specific session
@@ -136,16 +133,17 @@ def compliance_assistant(db_engine):
                     result_data = row[0]  # row[0] is already the dict
                     
                     # Handle nested data structure from n8n
+                    extracted_data = result_data
                     if isinstance(result_data, dict) and "data" in result_data:
-                        if isinstance(result_data.get("data"), dict) and isinstance(result_data["data"].get("data"), list):
-                            actual_data = result_data["data"]["data"][0]
-                            extracted_data = actual_data
+                        if isinstance(result_data.get("data"), dict) and "data" in result_data["data"]:
+                            inner_data = result_data["data"].get("data")
+                            if isinstance(inner_data, list) and len(inner_data) > 0:
+                                extracted_data = inner_data[0]
+                            elif isinstance(inner_data, str):
+                                extracted_data = {"data": inner_data}
                         elif isinstance(result_data.get("data"), list):
-                            extracted_data = result_data["data"]
-                        else:
-                            extracted_data = result_data
-                    else:
-                        extracted_data = result_data
+                            if len(result_data["data"]) > 0:
+                                extracted_data = result_data["data"][0]
                     
                     # Save to session state
                     st.session_state.compliance_current = {
@@ -180,7 +178,7 @@ def compliance_assistant(db_engine):
         display_compliance_result(st.session_state.compliance_current)
 
 def display_compliance_result(record):
-    """Display compliance results in a well-formatted way"""
+    """Display compliance results with base64 CSV decoded"""
     st.markdown("---")
     st.markdown("### 📄 Submission Status")
     col1, col2 = st.columns(2)
@@ -195,76 +193,38 @@ def display_compliance_result(record):
         # Extract data from results
         results_data = record["results"]
         
-        # Check for base64 CSV data
+        # Handle nested data structure and extract base64 CSV
         csv_data = None
+        
         if isinstance(results_data, dict):
-            # After extraction, results_data should be: {"data": "base64_string", "session_id": "..."}
+            # Check for base64 CSV in various possible locations
             if "data" in results_data:
                 csv_data = results_data.get("data")
-                # If it's still nested (hasn't been extracted yet), check deeper
-                if isinstance(csv_data, dict) and "data" in csv_data:
-                    nested_list = csv_data.get("data")
-                    if isinstance(nested_list, list) and len(nested_list) > 0:
-                        first_item = nested_list[0]
-                        if isinstance(first_item, dict) and "data" in first_item:
-                            csv_data = first_item.get("data")
-        elif isinstance(results_data, list) and len(results_data) > 0:
-            if isinstance(results_data[0], dict):
-                csv_data = results_data[0].get("data")
+            elif isinstance(results_data.get("data"), dict) and "data" in results_data["data"]:
+                # Handle nested structure: {"data": {"data": "base64..."}}
+                inner_data = results_data["data"].get("data")
+                if isinstance(inner_data, list) and len(inner_data) > 0:
+                    csv_data = inner_data[0].get("data")
+                elif isinstance(inner_data, str):
+                    csv_data = inner_data
         
+        # Decode and display CSV
         if csv_data:
             try:
-                # Decode base64 CSV - handle both string and byte responses
-                if isinstance(csv_data, str):
-                    csv_bytes = base64.b64decode(csv_data)
-                else:
-                    csv_bytes = base64.b64decode(csv_data)
+                # Decode base64
+                decoded_csv = base64.b64decode(csv_data).decode('utf-8')
                 
-                # Try different encodings
-                csv_decoded = None
-                for encoding in ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']:
-                    try:
-                        csv_decoded = csv_bytes.decode(encoding)
-                        break
-                    except:
-                        continue
+                # Parse CSV
+                df = pd.read_csv(StringIO(decoded_csv))
                 
-                if not csv_decoded:
-                    csv_decoded = csv_bytes.decode('utf-8', errors='replace')
-                
-                # Read CSV into pandas DataFrame
-                df = pd.read_csv(StringIO(csv_decoded))
-                
-                # Remove ID and created_at columns if they exist
-                columns_to_remove = ['id', 'ID', 'Id', 'created_at', 'Created At', 'Created_At', 'createdAt']
-                for col in columns_to_remove:
-                    if col in df.columns:
-                        df = df.drop(columns=[col])
-                
-                # Display as a table
-                st.markdown("#### Compliance Data Table")
+                # Display as dataframe
                 st.dataframe(df, use_container_width=True, hide_index=True)
                 
             except Exception as e:
                 st.error(f"Error decoding CSV: {e}")
-        elif isinstance(results_data, dict) and "output" in results_data:
-            # Fallback to output field if available
-            output = results_data.get("output", "")
-            
-            if output:
-                # Display the compliance findings
-                st.markdown("#### Compliance Findings")
-                # Split the output by line and display each finding
-                findings = [f.strip() for f in output.split('\n') if f.strip()]
-                for finding in findings:
-                    if finding.startswith('-'):
-                        finding = finding[1:]  # Remove leading dash
-                    if finding:
-                        st.markdown(f"• {finding}")
-            else:
-                st.info("No output available.")
+                st.code(csv_data[:500] if len(csv_data) > 500 else csv_data, language="text")
         else:
-            st.info("No compliance results available.")
+            st.info("No CSV data found in results.")
             
     elif record["status"] == "processing":
         st.info("Processing... results will appear here when ready.")
