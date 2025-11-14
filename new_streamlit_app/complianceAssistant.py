@@ -8,7 +8,7 @@ import pandas as pd
 from io import StringIO
 
 # This URL is for the n8n workflow webhook endpoint
-N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/62280c29-7f88-4e1c-9e2b-ec308fff4b8d"
+N8N_COMPLIANCE_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/62280c29-7f88-4e1c-9e2b-ec308fff4b8d"
 
 def submit_to_n8n_and_poll(uploaded_file, session_id, db_engine):
     """Submit file to n8n and poll for results from database."""
@@ -112,7 +112,7 @@ def compliance_assistant(db_engine):
         
     # Test button to simulate results with existing session ID
     if st.button("🧪 Test with Existing Session ID", type="secondary"):
-        test_session_id = "56712908-6de7-4352-8cce-247697839d61"
+        test_session_id = "99b42128-8050-4b04-a202-1377e2f530f0"
         st.info(f"Testing with session ID: {test_session_id}")
         
         # Query the database for this specific session
@@ -217,8 +217,79 @@ def display_compliance_result(record):
                 # Parse CSV
                 df = pd.read_csv(StringIO(decoded_csv))
                 
-                # Display as dataframe
-                st.dataframe(df, use_container_width=True, hide_index=True)
+                # Display as custom formatted table
+                st.markdown("### 📋 Compliance Analysis Results")
+                
+                # Add CSS for larger font size
+                st.markdown("""
+                <style>
+                .compliance-table {
+                    font-size: 1.1em;
+                }
+                .compliance-table-header {
+                    font-size: 1.2em;
+                    font-weight: bold;
+                }
+                .compliance-cas-id {
+                    font-size: 1.3em;
+                    font-weight: 500;
+                }
+                .compliance-issues-header {
+                    font-size: 1.3em;
+                    font-weight: 500;
+                }
+                .compliance-not-found {
+                    font-size: 1.3em;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
+                # Add table headers
+                header_col1, header_col2 = st.columns([1, 2])
+                with header_col1:
+                    st.markdown('<div class="compliance-table-header">CAS ID</div>', unsafe_allow_html=True)
+                with header_col2:
+                    st.markdown('<div class="compliance-table-header">Result</div>', unsafe_allow_html=True)
+                st.markdown("---")
+                
+                # Create custom table format
+                for idx, row in df.iterrows():
+                    # Get CAS ID (handle different column name variations)
+                    cas_id = row.get('CAS ID', '') or row.get('cas_id', '') or row.get('CAS_ID', '') or str(row.iloc[0] if len(row) > 0 else '')
+                    result = str(row.get('result', ''))
+                    
+                    # Split by nextline marker
+                    issues = [issue.strip() for issue in result.split('*nextline*') if issue.strip()]
+                    
+                    # Create columns for custom table layout
+                    col1, col2 = st.columns([1, 2])
+                    
+                    with col1:
+                        st.markdown(f'<div class="compliance-cas-id">{cas_id}</div>', unsafe_allow_html=True)
+                    
+                    with col2:
+                        if issues:
+                            # Only show "Compliance Issues" header if not all issues are "not found in any source"
+                            all_not_found = all(issue.lower().strip() == "not found in any source" for issue in issues)
+                            
+                            if not all_not_found:
+                                st.markdown('<div class="compliance-issues-header">Compliance Issues</div>', unsafe_allow_html=True)
+                            
+                            for issue in issues:
+                                # Check if issue is "not found in any source"
+                                if issue.lower().strip() == "not found in any source":
+                                    st.markdown(f'<div class="compliance-not-found">{issue}</div>', unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f'<div class="compliance-table">- {issue}</div>', unsafe_allow_html=True)
+                        else:
+                            # Check if single result is "not found in any source"
+                            if result.lower().strip() != "not found in any source":
+                                st.markdown(f'<div class="compliance-issues-header">Compliance Issues</div>', unsafe_allow_html=True)
+                                st.markdown(f'<div class="compliance-table">*{result}*</div>', unsafe_allow_html=True)
+                            else:
+                                st.markdown(f'<div class="compliance-not-found">{result}</div>', unsafe_allow_html=True)
+                    
+                    st.markdown("---")
                 
             except Exception as e:
                 st.error(f"Error decoding CSV: {e}")

@@ -12,7 +12,7 @@ from pypdf import PdfReader, PdfWriter
 load_dotenv()
 
 # n8n workflow URL for CAD analysis - using webhook endpoint
-N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook-test/dcd53389-3d85-469d-840e-35ecae130592"
+N8N_CAD_WORKFLOW_URL = "https://meiyume.app.n8n.cloud/webhook/dcd53389-3d85-469d-840e-35ecae130592"
 
 def display_base64_results(results_list, expected_session_id=None):
     """Decode base64 CSV results and display as dataframes, filtering by session_id"""
