@@ -1,1 +1,0 @@
-# Meiyume Core - Shared functionality for all AI assistants 
