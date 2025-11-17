@@ -12,7 +12,8 @@ dist/
 build/
 
 # Streamlit
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 
 # IDE
 .vscode/
