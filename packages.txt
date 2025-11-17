@@ -1,3 +1,0 @@
-# This file is used by Streamlit Cloud to install system packages
-# Add any system-level dependencies here if needed
-
