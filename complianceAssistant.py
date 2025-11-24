@@ -112,7 +112,7 @@ def compliance_assistant(db_engine):
         
     # Test button to simulate results with existing session ID
     if st.button("🧪 Test with Existing Session ID", type="secondary"):
-        test_session_id = "99b42128-8050-4b04-a202-1377e2f530f0"
+        test_session_id = "33d961d0-5c8e-4a08-a866-9cf4961a976c"
         st.info(f"Testing with session ID: {test_session_id}")
         
         # Query the database for this specific session
@@ -217,8 +217,6 @@ def display_compliance_result(record):
                 # Parse CSV
                 df = pd.read_csv(StringIO(decoded_csv))
                 
-                # Display as custom formatted table
-                st.markdown("### 📋 Compliance Analysis Results")
                 
                 # Add CSS for larger font size
                 st.markdown("""
