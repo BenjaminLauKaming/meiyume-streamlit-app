@@ -7,3 +7,4 @@ SQLAlchemy
 openpyxl
 pypdf
 beautifulsoup4
+numpy<2

@@ -241,6 +241,16 @@ def display_compliance_result(record):
                 .compliance-not-found {
                     font-size: 1.3em;
                 }
+                .compliance-pass {
+                    color: #28a745;
+                    font-weight: bold;
+                    font-size: 1.1em;
+                }
+                .compliance-fail {
+                    color: #dc3545;
+                    font-weight: bold;
+                    font-size: 1.1em;
+                }
                 </style>
                 """, unsafe_allow_html=True)
                 
@@ -269,25 +279,18 @@ def display_compliance_result(record):
                     
                     with col2:
                         if issues:
-                            # Only show "Compliance Issues" header if not all issues are "not found in any source"
-                            all_not_found = all(issue.lower().strip() == "not found in any source" for issue in issues)
-                            
-                            if not all_not_found:
-                                st.markdown('<div class="compliance-issues-header">Compliance Issues</div>', unsafe_allow_html=True)
-                            
                             for issue in issues:
                                 # Check if issue is "not found in any source"
                                 if issue.lower().strip() == "not found in any source":
-                                    st.markdown(f'<div class="compliance-not-found">{issue}</div>', unsafe_allow_html=True)
+                                    st.markdown(f'<div class="compliance-pass">PASS : Not found in any database.</div>', unsafe_allow_html=True)
                                 else:
-                                    st.markdown(f'<div class="compliance-table">- {issue}</div>', unsafe_allow_html=True)
+                                    st.markdown(f'<div class="compliance-fail">FAIL : {issue}</div>', unsafe_allow_html=True)
                         else:
                             # Check if single result is "not found in any source"
-                            if result.lower().strip() != "not found in any source":
-                                st.markdown(f'<div class="compliance-issues-header">Compliance Issues</div>', unsafe_allow_html=True)
-                                st.markdown(f'<div class="compliance-table">*{result}*</div>', unsafe_allow_html=True)
-                            else:
-                                st.markdown(f'<div class="compliance-not-found">{result}</div>', unsafe_allow_html=True)
+                            if result.lower().strip() == "not found in any source":
+                                st.markdown(f'<div class="compliance-pass">PASS : Not found in any database.</div>', unsafe_allow_html=True)
+                            elif result:
+                                st.markdown(f'<div class="compliance-fail">FAIL : {result}</div>', unsafe_allow_html=True)
                     
                     st.markdown("---")
                 
