@@ -36,6 +36,7 @@ class Result(Base):
     session_id = Column(String, primary_key=True)
     agent_type = Column(String, primary_key=True)
     data = Column(JSON)
+    filename = Column(String)  # Added filename column
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 def init_db():
