@@ -31,3 +31,6 @@ Thumbs.db
 
 # Large files
 *.zip
+
+# Virtual Environment
+venv/

@@ -1,3 +1,4 @@
+import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 import io
@@ -388,6 +389,7 @@ def scrape_table_3_clp():
             row_values.get('limits', '')
         ])
 
+
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(target_headers)
@@ -481,19 +483,28 @@ def init_regulatory_db(engine):
         );
         """,
         """
-        CREATE TABLE IF NOT EXISTS extra (
+        CREATE TABLE IF NOT EXISTS pfas (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             chemical_name TEXT,
             cas_no text,
-            productCat text,
+            classification text,
+            limits TEXT,
             created_at DATE DEFAULT NOW()
         );
         """,
         """
-        CREATE TABLE IF NOT EXISTS LOreal (
+        CREATE TABLE IF NOT EXISTS loreal (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             chemical_name TEXT,
             cas_no text,
+            created_at DATE DEFAULT NOW()
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS customer_lists (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            table_name TEXT UNIQUE NOT NULL,
+            display_name TEXT NOT NULL,
             created_at DATE DEFAULT NOW()
         );
         """,
@@ -501,7 +512,9 @@ def init_regulatory_db(engine):
         "ALTER TABLE prop65 ADD COLUMN IF NOT EXISTS classification TEXT;",
         "ALTER TABLE prop65 ADD COLUMN IF NOT EXISTS limits TEXT;",
         "ALTER TABLE svhc ADD COLUMN IF NOT EXISTS classification TEXT;",
-        "ALTER TABLE svhc ADD COLUMN IF NOT EXISTS limits TEXT;"
+        "ALTER TABLE svhc ADD COLUMN IF NOT EXISTS limits TEXT;",
+        "ALTER TABLE loreal ADD COLUMN IF NOT EXISTS classification TEXT;",
+        "ALTER TABLE loreal ADD COLUMN IF NOT EXISTS limits TEXT;"
     ]
     try:
         # Using engine.begin() ensures immediate commit and cleaner transactions in SQLAlchemy 2.0
@@ -743,5 +756,332 @@ def scrape_svhc():
         return "; ".join(parts)
 
     target_df['limits'] = echa_df.apply(format_limits, axis=1)
-    
+
     return target_df[["chemical_name", "cas_no", "classification", "limits"]].to_csv(index=False)
+
+
+# --- Customer List Management Functions ---
+
+def get_customer_lists(engine):
+    """Returns list of registered customer tables as [(table_name, display_name), ...]"""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT table_name, display_name FROM customer_lists ORDER BY display_name"))
+            return [(row[0], row[1]) for row in result]
+    except Exception as e:
+        print(f"Error fetching customer lists: {e}")
+        return []
+
+def add_customer_list(engine, table_name, display_name):
+    """Register a new customer list and create its table."""
+    table_name = re.sub(r'[^a-z0-9_]', '_', table_name.lower().strip())
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(f"""
+                CREATE TABLE IF NOT EXISTS {table_name} (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    chemical_name TEXT,
+                    cas_no TEXT,
+                    classification TEXT,
+                    limits TEXT,
+                    created_at DATE DEFAULT NOW()
+                );
+            """))
+            conn.execute(text(
+                "INSERT INTO customer_lists (table_name, display_name) VALUES (:tn, :dn) ON CONFLICT (table_name) DO NOTHING"
+            ), {"tn": table_name, "dn": display_name})
+        return True, f"Created table '{table_name}'"
+    except Exception as e:
+        return False, str(e)
+
+def _cas_json_to_plain(cas_json_str):
+    """Convert DB format {"cas":["206-44-0"]} to plain '206-44-0' for user."""
+    if not cas_json_str or pd.isna(cas_json_str):
+        return ""
+    try:
+        parsed = json.loads(str(cas_json_str))
+        if isinstance(parsed, dict) and "cas" in parsed:
+            cas_list = parsed["cas"]
+            if isinstance(cas_list, list):
+                return ", ".join(cas_list)
+            return str(cas_list)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return str(cas_json_str)
+
+def _cas_plain_to_json(cas_plain_str):
+    """Convert user plain '206-44-0, 123-45-6' to DB format {"cas":["206-44-0","123-45-6"]}."""
+    if not cas_plain_str or (isinstance(cas_plain_str, float) and pd.isna(cas_plain_str)):
+        return json.dumps({"cas": []})
+    cas_str = str(cas_plain_str).strip()
+    if not cas_str:
+        return json.dumps({"cas": []})
+    cas_list = [c.strip() for c in re.split(r'[;,\s]+', cas_str) if c.strip()]
+    cas_list = [c for c in cas_list if any(ch.isdigit() for ch in c)]
+    cas_list = list(dict.fromkeys(cas_list))
+    return json.dumps({"cas": cas_list})
+
+def download_customer_list(engine, table_name):
+    """Download a customer table from DB and return user-readable CSV bytes."""
+    table_name = re.sub(r'[^a-z0-9_]', '_', table_name.lower().strip())
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text(f"SELECT chemical_name, cas_no, classification, limits FROM {table_name}"))
+            rows = result.fetchall()
+        df = pd.DataFrame(rows, columns=["chemical_name", "cas_no", "classification", "limits"])
+        df["cas_no"] = df["cas_no"].apply(_cas_json_to_plain)
+        return df.to_csv(index=False)
+    except Exception as e:
+        raise ValueError(f"Failed to download '{table_name}': {e}")
+
+def upload_customer_list(engine, table_name, uploaded_file):
+    """Parse user-uploaded CSV/Excel, convert plain CAS to JSON, and sync to DB."""
+    table_name = re.sub(r'[^a-z0-9_]', '_', table_name.lower().strip())
+    try:
+        filename = uploaded_file.name.lower()
+        if filename.endswith('.xlsx') or filename.endswith('.xls'):
+            df = pd.read_excel(uploaded_file)
+        else:
+            df = pd.read_csv(uploaded_file)
+
+        df.columns = [c.strip().lower().replace(' ', '_') for c in df.columns]
+
+        required = {"chemical_name", "cas_no"}
+        missing = required - set(df.columns)
+        if missing:
+            return False, f"Missing required columns: {', '.join(missing)}. Expected: chemical_name, cas_no, classification, limits"
+
+        if "classification" not in df.columns:
+            df["classification"] = ""
+        if "limits" not in df.columns:
+            df["limits"] = ""
+
+        df["cas_no"] = df["cas_no"].apply(_cas_plain_to_json)
+        df = df.dropna(subset=["chemical_name"])
+        df = df[df["chemical_name"].str.strip() != ""]
+        df = df[["chemical_name", "cas_no", "classification", "limits"]]
+
+        csv_data = df.to_csv(index=False)
+        return sync_csv_to_db(table_name, csv_data, engine)
+    except Exception as e:
+        return False, str(e)
+
+
+# --- Streamlit UI ---
+
+def regulatory_scraper_page(engine):
+    st.title("Regulatory Scraper")
+    st.markdown("""
+    Generate and download the latest data from European and International regulatory sources.
+    All scrapers are optimized for speed and handle merged table cells automatically.
+    """)
+    # Database Management
+    st.subheader("Database Setup")
+    st.write("Click below to create or update the required tables in Supabase (`cmr`, `annex2`, `annex3`, `svhc`, `prop65`, etc.).")
+    if st.button("Create & Sync Database Tables", use_container_width=True):
+        with st.spinner("Synchronizing schema..."):
+            if init_regulatory_db(engine):
+                st.success("Successfully created/verified all tables: `cmr`, `annex2`, `annex3`, `svhc`, `prop65`.")
+            else:
+                st.error("Failed to synchronize database. Check logs.")
+
+    st.link_button("Open Supabase Dashboard", "https://supabase.com/dashboard/project/ixsxmovayvtdeejdokvf", use_container_width=True)
+
+    st.divider()
+
+    # Scrapers
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("CMR CLC Regulation")
+        st.info("Source: Publications Office of the EU (DOC_2 - Table 3)")
+        if st.button("Scrape & Download", key="btn_clp"):
+            with st.spinner("Extracting classification data..."):
+                try:
+                    csv_data = scrape_table_3_clp()
+                    st.download_button(label="Download CSV", data=csv_data, file_name="cmr_clc_regulation.csv", mime="text/csv")
+                    success, msg = sync_csv_to_db("cmr", csv_data, engine)
+                    if success:
+                        st.success("Extraction complete and Database synced!")
+                    else:
+                        st.error(f"Extraction complete, but Database sync failed: {msg}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+        st.subheader("Cosmetic Regulation CE annex II")
+        st.info("Source: EUR-Lex (Annex II - Prohibited Substances)")
+        if st.button("Scrape & Download", key="btn_annex2"):
+            with st.spinner("Extracting Annex II..."):
+                try:
+                    csv_data = scrape_annex("II")
+                    st.download_button(label="Download CSV", data=csv_data, file_name="annex_II.csv", mime="text/csv")
+                    success, msg = sync_csv_to_db("cosmetic_annex2", csv_data, engine)
+                    if success:
+                        st.success("Extraction complete and Database synced!")
+                    else:
+                        st.error(f"Extraction complete, but Database sync failed: {msg}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+        st.subheader("Cosmetic Regulation CE annex III")
+        st.info("Source: EUR-Lex (Annex III - Restricted Substances)")
+        if st.button("Scrape & Download", key="btn_annex3"):
+            with st.spinner("Extracting Annex III..."):
+                try:
+                    csv_data = scrape_annex("III")
+                    st.download_button(label="Download CSV", data=csv_data, file_name="annex_III.csv", mime="text/csv")
+                    success, msg = sync_csv_to_db("cosmetic_annex3", csv_data, engine)
+                    if success:
+                        st.success("Extraction complete and Database synced!")
+                    else:
+                        st.error(f"Extraction complete, but Database sync failed: {msg}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+    with col2:
+        st.subheader("Reach SVHC")
+        st.info("Source: ECHA (Candidate list of substances of very high concern)")
+        if st.button("Scrape & Download", key="btn_svhc"):
+            with st.spinner("Extracting SVHC List..."):
+                try:
+                    csv_data = scrape_svhc()
+                    st.download_button(label="Download CSV", data=csv_data, file_name="reach_svhc.csv", mime="text/csv")
+                    success, msg = sync_csv_to_db("svhc", csv_data, engine)
+                    if success:
+                        st.success("Extraction complete and Database synced!")
+                    else:
+                        st.error(f"Extraction complete, but Database sync failed: {msg}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+        st.subheader("CA Prop65")
+        st.info("Source: OEHHA (Proposition 65 List)")
+        st.link_button("Go to OEHHA Page (to copy CSV link)", "https://oehha.ca.gov/proposition-65/proposition-65-list", use_container_width=True)
+        prop65_manual_url = st.text_input(
+            "Manual CSV Link (Optional)",
+            placeholder="Paste the .csv link here...",
+            help="If the auto-scraper fails (blocked by firewall), click the button above, right-click 'Proposition 65 List (CSV)', 'Copy link address', and paste it here."
+        )
+        if st.button("Scrape & Download", key="btn_prop65"):
+            with st.spinner("Fetching latest Prop 65 CSV..."):
+                try:
+                    csv_data = scrape_prop65(manual_url=prop65_manual_url if prop65_manual_url else None)
+                    st.download_button(label="Download CSV", data=csv_data, file_name="ca_prop65.csv", mime="text/csv")
+                    success, msg = sync_csv_to_db("prop65", csv_data, engine)
+                    if success:
+                        st.success("Extraction complete and Database synced!")
+                    else:
+                        st.error(f"Extraction complete, but Database sync failed: {msg}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+    st.divider()
+
+    # --- Customer / Internal Lists Section ---
+    st.header("Customer / Internal Lists")
+
+    st.subheader("Export Existing Data")
+    customer_lists = get_customer_lists(engine)
+    list_options = {display: table for table, display in customer_lists}
+
+    if list_options:
+        col_export, col_import = st.columns(2)
+
+        with col_export:
+            export_display = st.selectbox("Select a list to export", list(list_options.keys()), key="dl_select")
+            export_table = list_options[export_display]
+            if st.button("Export as CSV", key="btn_dl_customer", use_container_width=True):
+                with st.spinner("Preparing export..."):
+                    try:
+                        csv_data = download_customer_list(engine, export_table)
+                        st.download_button(
+                            label=f"Save {export_display} CSV",
+                            data=csv_data,
+                            file_name=f"{export_table}.csv",
+                            mime="text/csv",
+                            key="dl_customer_file"
+                        )
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+        with col_import:
+            upload_display = st.selectbox("Select a list to upload to", list(list_options.keys()), key="ul_select")
+            upload_table = list_options[upload_display]
+            uploaded_file = st.file_uploader(
+                "Upload updated CSV or Excel",
+                type=["csv", "xlsx", "xls"],
+                key="ul_file"
+            )
+            if uploaded_file:
+                if st.button("Upload & Sync to Database", key="btn_ul_customer", use_container_width=True):
+                    st.session_state["confirm_upload"] = True
+
+            if st.session_state.get("confirm_upload"):
+                st.warning(f"Are you sure you want to replace ALL data in **{upload_display}**? This cannot be undone.")
+                col_yes, col_no = st.columns(2)
+                with col_yes:
+                    if st.button("Yes, update " + upload_display, key="btn_confirm_yes", use_container_width=True):
+                        st.session_state["confirm_upload"] = False
+                        with st.spinner("Converting CAS numbers and syncing..."):
+                            success, msg = upload_customer_list(engine, upload_table, uploaded_file)
+                            if success:
+                                st.success(f"Synced to '{upload_display}'! CAS numbers converted to database format.")
+                            else:
+                                st.error(f"Upload failed: {msg}")
+                with col_no:
+                    if st.button("Cancel", key="btn_confirm_no", use_container_width=True):
+                        st.session_state["confirm_upload"] = False
+                        st.rerun()
+    else:
+        st.info("No customer lists found. Click 'Create & Sync Database Tables' above first.")
+
+    # Create new customer list from template
+    st.divider()
+    st.subheader("Create New Customer List")
+    template_csv = "chemical_name,cas_no,classification,limits\nExample Chemical,206-44-0,Prohibited,Max 0.1%\n"
+    st.download_button(
+        label="Download Blank Template",
+        data=template_csv,
+        file_name="customer_list_template.csv",
+        mime="text/csv",
+        key="dl_template",
+        use_container_width=True
+    )
+    st.markdown("Fill in the template above, then upload it here to create a new list.")
+
+    col_name, col_table = st.columns(2)
+    with col_name:
+        new_display = st.text_input("Display Name", placeholder="e.g. Estee Lauder", key="new_display")
+    with col_table:
+        new_table = st.text_input("Table Name (lowercase, no spaces)", placeholder="e.g. estee_lauder", key="new_table")
+
+    new_file = st.file_uploader(
+        "Upload filled template CSV or Excel",
+        type=["csv", "xlsx", "xls"],
+        key="new_list_file"
+    )
+
+    if new_file and new_display and new_table:
+        if st.button("Create List & Import Data", key="btn_create_list", use_container_width=True):
+            st.session_state["confirm_create"] = True
+
+        if st.session_state.get("confirm_create"):
+            st.warning(f"This will create a new table **{new_table}** and import the uploaded data. Continue?")
+            col_cy, col_cn = st.columns(2)
+            with col_cy:
+                if st.button(f"Yes, create {new_display}", key="btn_create_yes", use_container_width=True):
+                    st.session_state["confirm_create"] = False
+                    with st.spinner("Creating table and importing data..."):
+                        success, msg = add_customer_list(engine, new_table, new_display)
+                        if not success:
+                            st.error(f"Failed to create table: {msg}")
+                        else:
+                            success, msg = upload_customer_list(engine, new_table, new_file)
+                            if success:
+                                st.success(f"Created '{new_display}' and imported data! Refresh to see it in the dropdowns above.")
+                            else:
+                                st.error(f"Table created but import failed: {msg}")
+            with col_cn:
+                if st.button("Cancel", key="btn_create_no", use_container_width=True):
+                    st.session_state["confirm_create"] = False
+                    st.rerun()
