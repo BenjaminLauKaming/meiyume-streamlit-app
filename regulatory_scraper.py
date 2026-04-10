@@ -790,6 +790,7 @@ def add_customer_list(engine, table_name, display_name):
             conn.execute(text(
                 "INSERT INTO customer_lists (table_name, display_name) VALUES (:tn, :dn) ON CONFLICT (table_name) DO NOTHING"
             ), {"tn": table_name, "dn": display_name})
+            conn.execute(text(f"ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY;"))
         return True, f"Created table '{table_name}'"
     except Exception as e:
         return False, str(e)
