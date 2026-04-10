@@ -794,6 +794,17 @@ def add_customer_list(engine, table_name, display_name):
     except Exception as e:
         return False, str(e)
 
+def delete_customer_list(engine, table_name):
+    """Drop the customer table and remove it from customer_lists registry."""
+    table_name = re.sub(r'[^a-z0-9_]', '_', table_name.lower().strip())
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(f"DROP TABLE IF EXISTS {table_name};"))
+            conn.execute(text("DELETE FROM customer_lists WHERE table_name = :tn"), {"tn": table_name})
+        return True, f"Deleted table '{table_name}'"
+    except Exception as e:
+        return False, str(e)
+
 def _cas_json_to_plain(cas_json_str):
     """Convert DB format {"cas":["206-44-0"]} to plain '206-44-0' for user."""
     if not cas_json_str or pd.isna(cas_json_str):
@@ -885,7 +896,6 @@ def regulatory_scraper_page(engine):
             else:
                 st.error("Failed to synchronize database. Check logs.")
 
-    st.link_button("Open Supabase Dashboard", "https://supabase.com/dashboard/project/ixsxmovayvtdeejdokvf", use_container_width=True)
 
     st.divider()
 
@@ -1034,6 +1044,31 @@ def regulatory_scraper_page(engine):
                         st.rerun()
     else:
         st.info("No customer lists found. Click 'Create & Sync Database Tables' above first.")
+
+    # Delete a customer list
+    if list_options:
+        st.divider()
+        st.subheader("Delete Customer List")
+        delete_display = st.selectbox("Select a list to delete", list(list_options.keys()), key="del_select")
+        delete_table = list_options[delete_display]
+        if st.button("Delete List", key="btn_delete_customer", use_container_width=True):
+            st.session_state["confirm_delete"] = True
+
+        if st.session_state.get("confirm_delete"):
+            st.error(f"This will permanently drop the **{delete_display}** table and all its data. This cannot be undone.")
+            col_dy, col_dn = st.columns(2)
+            with col_dy:
+                if st.button(f"Yes, delete {delete_display}", key="btn_delete_yes", use_container_width=True):
+                    st.session_state["confirm_delete"] = False
+                    success, msg = delete_customer_list(engine, delete_table)
+                    if success:
+                        st.success(f"Deleted '{delete_display}'. Refresh to update the dropdowns.")
+                    else:
+                        st.error(f"Delete failed: {msg}")
+            with col_dn:
+                if st.button("Cancel", key="btn_delete_no", use_container_width=True):
+                    st.session_state["confirm_delete"] = False
+                    st.rerun()
 
     # Create new customer list from template
     st.divider()
