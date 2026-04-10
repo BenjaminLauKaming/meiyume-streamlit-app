@@ -155,16 +155,24 @@ def compliance_assistant(db_engine):
     # Add regulations to sidebar
     with st.sidebar:
         st.markdown("---")
-        st.markdown("###  Regulations Checked")
-        st.markdown("""
-        - CMR CLC Regulation
-        - Reach SVHC
-        - CA Prop65
-        - Cosmetic Regulation CE annex II
-        - Cosmetic Regulation CE annex III
-        - L'Oreal
-        - Others
-        """)
+        st.markdown("### Regulations Checked")
+        fixed = [
+            "CMR CLC Regulation",
+            "Reach SVHC",
+            "CA Prop65",
+            "Cosmetic Regulation CE annex II",
+            "Cosmetic Regulation CE annex III",
+        ]
+        regulation_md = "\n".join(f"- {r}" for r in fixed)
+        try:
+            with db_engine.connect() as conn:
+                result = conn.execute(text("SELECT display_name FROM customer_lists ORDER BY display_name"))
+                customer_names = [row[0] for row in result]
+            if customer_names:
+                regulation_md += "\n" + "\n".join(f"- {n}" for n in customer_names)
+        except Exception:
+            pass
+        st.markdown(regulation_md)
 
     st.markdown("### Upload MSDS (PDF) for compliance check")
 
