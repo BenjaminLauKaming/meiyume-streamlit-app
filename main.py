@@ -6,7 +6,7 @@ from sqlalchemy.sql import func
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
 # --- Database Setup ---
 
@@ -61,6 +61,7 @@ import engAssistant
 import complianceAssistant
 import qualityRagChat
 import regulatory_scraper
+import multimodalAssistant
 
 
 st.set_page_config(
@@ -85,7 +86,7 @@ def main():
 
     page = st.sidebar.selectbox(
         "Choose an Assistant",
-        ["CAD Analysis", "Compliance Checker", "Quality RAG Chat", "Regulatory Scraper"],
+        ["CAD Analysis", "Compliance Checker", "Quality RAG Chat", "Regulatory Scraper", "Multimodal RAG Agent"],
     )
 
     # Pass the database engine to the assistants
@@ -99,6 +100,8 @@ def main():
         qualityRagChat.quality_rag_chat()
     elif page == "Regulatory Scraper":
         regulatory_scraper.regulatory_scraper_page(compliance_engine)
+    elif page == "Multimodal RAG Agent":
+        multimodalAssistant.multimodal_assistant_page()
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Version:** 5.1.0")

@@ -8,3 +8,8 @@ openpyxl
 pypdf
 beautifulsoup4
 numpy<2
+langchain
+langchain-openai
+langchain-community
+mistralai
+supabase
