@@ -237,17 +237,34 @@ def multimodal_assistant_page():
                 st.caption(f"*Filtering search for category: {predicted_category}*")
                 with st.spinner("Searching for sections and expanding context..."):
                     supabase = init_supabase()
+                    env = get_env_vars()
                     embeddings = OpenAIEmbeddings(api_key=env["openai_api_key"])
-                    vector_store = SupabaseVectorStore(
-                        client=supabase,
-                        embedding=embeddings,
-                        table_name="documents",
-                        query_name="match_documents"
-                    )
                     
-                    # 1. Strict mathematical hit to locate the most relevant chunks
-                    filter_dict = {"category": predicted_category}
-                    retrieved_docs = vector_store.similarity_search(prompt, k=3, filter=filter_dict)
+                    # --- UNIVERSAL FIX: Manual RPC call bypasses the LangChain library bug ---
+                    query_vector = embeddings.embed_query(prompt)
+                    
+                    try:
+                        rpc_res = supabase.rpc("match_documents", {
+                            "query_embedding": query_vector,
+                            "match_count": 3,
+                            "filter": {"category": predicted_category}
+                        }).execute()
+                        
+                        # Reconstruct basic objects to match what the rest of the code expects
+                        retrieved_docs = []
+                        for item in rpc_res.data:
+                            # Create a mock object that has .metadata and .page_content attributes
+                            class MockDoc:
+                                def __init__(self, content, metadata):
+                                    self.page_content = content
+                                    self.metadata = metadata
+                            
+                            retrieved_docs.append(MockDoc(item["content"], item["metadata"]))
+                            
+                    except Exception as e:
+                        st.error(f"Search failed: {str(e)}")
+                        retrieved_docs = []
+                    # -------------------------------------------------------------------------
                     
                     if not retrieved_docs:
                         msg = f"I didn't find any relevant documents in the {predicted_category} category."
