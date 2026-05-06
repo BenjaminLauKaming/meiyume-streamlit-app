@@ -3,6 +3,7 @@ import os
 import requests
 import time
 import base64
+import re
 from typing import List, Dict
 
 from dotenv import load_dotenv
@@ -185,18 +186,97 @@ def identify_category_from_query(query: str, chat_history: List[Dict[str, str]])
     env = get_env_vars()
     llm = ChatOpenAI(model="gpt-4o-mini", api_key=env["openai_api_key"], temperature=0)
     history_str = "".join([f"{m['role'].capitalize()}: {m['content']}\n" for m in chat_history[-4:]])
+    
+    system_prompt = f"""Your job is to classify the user's latest query into one of these exact categories: {', '.join(CATEGORIES)}.
+
+Instead of just looking for exact word matches, analyze the user's intent and the semantics of their question. Here is a guide to what each category covers:
+- Stones: relates to rocks, marble, gems, natural hard materials, etc.
+- Aluminium and Anodizing: relates to lightweight metals, oxidation processes, aluminum parts, metal finishes, etc.
+- Electroplating: relates to coating metals, dipping in chemical solutions, metallic shiny finishes, etc.
+- Plastics: relates to polymers, injection molding, synthetic materials, acrylic, resins, etc.
+
+IMPORTANT: Use the provided Chat History to understand the context. If the user uses words like "it", "that", or asks a follow-up question, look at the chat history to determine which category they are talking about.
+
+If the query explicitly or implicitly matches one of the categories based on its meaning or the previous conversation context, respond with ONLY the exact category name.
+If the query is just a generic greeting or completely unrelated to these topics, respond ONLY with 'Unknown'."""
+
     prompt = ChatPromptTemplate.from_messages([
-        ("system", f"Your job is to classify the user's latest query into one of these exact categories: {', '.join(CATEGORIES)}.\n"
-                   "If the query explicitly or implicitly matches one of the categories, respond with ONLY the exact category name.\n"
-                   "If unsure or unrelated, respond ONLY with 'Unknown'."),
+        ("system", system_prompt),
         ("user", "Chat History:\n{history}\n\nUser Query:\n{query}")
     ])
     chain = prompt | llm
     return chain.invoke({"history": history_str, "query": query}).content.strip()
 
+def rephrase_query(query: str, chat_history: List[Dict[str, str]]) -> str:
+    env = get_env_vars()
+    llm = ChatOpenAI(model="gpt-4o-mini", api_key=env["openai_api_key"], temperature=0)
+    history_str = "".join([f"{m['role'].capitalize()}: {m['content']}\n" for m in chat_history[-4:]])
+    
+    system_prompt = """You are an AI assistant helping to improve vector database search retrieval.
+Given the chat history and the user's latest query, write a hypothetical, detailed paragraph that perfectly answers the user's question. 
+Use technical terminology that is likely to appear in a technical manual or plating handbook (e.g., translate "deep holes" to "cavities" or "recesses", "without power" to "currentless deposition").
+Do NOT formulate a question. Write a declarative, factual paragraph that sounds like it came straight out of a textbook.
+Return ONLY this hypothetical paragraph, without quotes or additional text."""
+
+    prompt_template = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        ("user", "Chat History:\n{history}\n\nUser Query:\n{query}")
+    ])
+    chain = prompt_template | llm
+    return chain.invoke({"history": history_str, "query": query}).content.strip()
+
+def render_chat_message(content: str):
+    """Parses markdown for images and renders them beautifully with Streamlit native columns & zoomable popups."""
+    parts = re.split(r'(!\[.*?\]\(.*?\))', content)
+    elements = []
+    
+    for part in parts:
+        if not part: continue
+        match = re.match(r'!\[(.*?)\]\((.*?)\)', part)
+        if match:
+            alt, url = match.groups()
+            if elements and isinstance(elements[-1], list):
+                elements[-1].append((alt, url))
+            else:
+                elements.append([(alt, url)])
+        else:
+            if part.strip() == "" and (not elements or isinstance(elements[-1], list)):
+                # Ignore whitespace between images so they group together in the same row
+                continue
+                
+            if elements and isinstance(elements[-1], str):
+                elements[-1] += part
+            else:
+                elements.append(part)
+    for elem in elements:
+        if isinstance(elem, str):
+            if elem.strip():
+                st.markdown(elem, unsafe_allow_html=True)
+        elif isinstance(elem, list):
+            # chunk images into rows of 2 for a neat grid
+            for i in range(0, len(elem), 2):
+                row = elem[i:i+2]
+                cols = st.columns(2) # Always use 2 columns to prevent single images from being full-width
+                for j, (alt, url) in enumerate(row):
+                    with cols[j]:
+                        st.image(url, caption=alt, use_container_width=True)
+
 def multimodal_assistant_page():
     st.title("🧩 Multimodal RAG Agent")
     st.markdown("### Upload Documents and Query them via OCR & Vector Search")
+    
+    # Inject CSS to force uniform image heights inside chat messages while keeping them clickable
+    st.markdown('''
+    <style>
+    div[data-testid="stChatMessageContent"] div[data-testid="stImage"] img {
+        height: 250px !important;
+        object-fit: contain !important;
+        border-radius: 8px !important;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+    }
+    </style>
+    ''', unsafe_allow_html=True)
     
     env = get_env_vars()
     if missing := [k for k, v in env.items() if not v]:
@@ -211,12 +291,18 @@ def multimodal_assistant_page():
             
     st.markdown("---")
     
+    col1, col2 = st.columns([0.85, 0.15])
+    with col2:
+        if st.button("🗑️", use_container_width=True):
+            st.session_state.mm_chat_history = []
+            st.rerun()
+            
     if 'mm_chat_history' not in st.session_state:
         st.session_state.mm_chat_history = []
         
     for message in st.session_state.mm_chat_history:
         with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+            render_chat_message(message["content"])
             
     if prompt := st.chat_input("Ask a question about the uploaded materials..."):
         st.session_state.mm_chat_history.append({"role": "user", "content": prompt})
@@ -240,13 +326,19 @@ def multimodal_assistant_page():
                     env = get_env_vars()
                     embeddings = OpenAIEmbeddings(api_key=env["openai_api_key"])
                     
+                    # Rewrite the query for better vector search matching
+                    rephrased_prompt = rephrase_query(prompt, st.session_state.mm_chat_history)
+                    # We hide the HyDE output from the UI since it looks weird to users
+                    # if rephrased_prompt.lower() != prompt.lower():
+                    #     st.caption(f"*Optimized search query: {rephrased_prompt}*")
+                    
                     # --- UNIVERSAL FIX: Manual RPC call bypasses the LangChain library bug ---
-                    query_vector = embeddings.embed_query(prompt)
+                    query_vector = embeddings.embed_query(rephrased_prompt)
                     
                     try:
                         rpc_res = supabase.rpc("match_documents", {
                             "query_embedding": query_vector,
-                            "match_count": 3,
+                            "match_count": 10,
                             "filter": {"category": predicted_category}
                         }).execute()
                         
@@ -306,7 +398,8 @@ def multimodal_assistant_page():
                             "2. INTEGRATION: You may streamline, summarize, or combine information logically to answer the user, but you must not change the meaning or the specific values/data points.\n"
                             "3. ZERO EXTERNAL KNOWLEDGE: Answer using ONLY the provided context. If the answer is not in the context, state that clearly.\n"
                             "4. VISUALS: If any images (markdown format) are present in the retrieved sections, you MUST include them at the relevant point in your response.\n"
-                            "5. GROUNDING: If you are combining multiple sections, prioritize showing the most important technical highlights first."
+                            "5. GROUNDING: If you are combining multiple sections, prioritize showing the most important technical highlights first.\n"
+                            "6. FORMATTING: Use Markdown extensively to make your answer highly readable. Use bullet points for lists, bold text for key terms, and keep paragraphs short."
                         )
                         qa_prompt = ChatPromptTemplate.from_messages([
                             ("system", system_msg),
@@ -316,5 +409,8 @@ def multimodal_assistant_page():
                         response = (qa_prompt | llm).invoke({"context": expanded_context, "question": prompt})
                         
                         msg = response.content
-                        message_placeholder.markdown(msg)
+                        
+                        message_placeholder.empty()
+                        render_chat_message(msg)
+                        
                         st.session_state.mm_chat_history.append({"role": "assistant", "content": msg})
