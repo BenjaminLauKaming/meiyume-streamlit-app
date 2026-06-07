@@ -71,6 +71,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown ingest error";
+    console.error("POST /api/ingest failed", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
