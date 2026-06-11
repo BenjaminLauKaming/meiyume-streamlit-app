@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useMemo, useRef, useState } from "react";
-import { FileUp, Loader2, Send, Trash2 } from "lucide-react";
+import { FileUp, Loader2, Send, Trash2, Wrench } from "lucide-react";
 import { MarkdownMessage } from "@/components/MarkdownMessage";
 import { CATEGORIES, Category, ChatMessage } from "@/types/rag";
 
@@ -95,6 +96,11 @@ export default function Home() {
             <p>Multimodal document assistant</p>
           </div>
         </div>
+
+        <Link className="agent-link" href="/engineering">
+          <Wrench size={18} />
+          Engineering Drawing Agent
+        </Link>
 
         <form className="panel upload-panel" onSubmit={uploadDocument}>
           <fieldset className="field category-field">

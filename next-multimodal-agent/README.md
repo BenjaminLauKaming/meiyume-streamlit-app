@@ -92,3 +92,38 @@ The material categories are:
 - Aluminium and Anodizing
 - Electroplating
 - Plastics
+
+## Engineering Drawing Agent
+
+Open `/engineering` to submit a multi-page technical drawing PDF to the n8n CAD workflow.
+
+The Next app:
+
+1. Splits the uploaded PDF into individual single-page PDFs.
+2. Sends the full document, all pages, and a generated `session_id` to n8n.
+3. Polls the Supabase `results` table for `agent_type = 'cad'`.
+4. Decodes and displays the returned `dimension` and `matching` base64 CSV files.
+
+Set the webhook URL:
+
+```env
+N8N_CAD_WORKFLOW_URL=https://meiyume.app.n8n.cloud/webhook/your-webhook-id
+```
+
+By default, the Engineering Agent reads results from `DATABASE_URL`, matching the Python app and n8n workflow. If n8n writes CAD results into another Postgres database, set:
+
+```env
+CAD_DATABASE_URL=
+```
+
+The n8n workflow expects this table:
+
+```sql
+create table if not exists results (
+  session_id varchar not null,
+  agent_type varchar not null,
+  data jsonb not null,
+  created_at timestamptz default now(),
+  primary key (session_id, agent_type)
+);
+```

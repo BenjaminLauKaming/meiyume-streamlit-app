@@ -86,6 +86,28 @@ button {
   font-size: 13px;
 }
 
+.agent-link,
+.back-link {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 11px;
+  color: var(--ink);
+  background: var(--panel-soft);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.agent-link:hover,
+.back-link:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
 .panel {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -347,6 +369,205 @@ button {
   display: none;
 }
 
+.engineering-shell {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.engineering-topbar {
+  min-height: 78px;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 14px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.engineering-topbar h1,
+.engineering-topbar p,
+.engineering-upload h2,
+.engineering-upload p,
+.engineering-results h2,
+.engineering-results p {
+  margin: 0;
+}
+
+.engineering-topbar h1 {
+  font-size: 20px;
+}
+
+.engineering-topbar p,
+.engineering-upload p,
+.engineering-results p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.engineering-content {
+  width: min(1500px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.engineering-upload,
+.engineering-results,
+.engineering-job {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 8px;
+}
+
+.engineering-upload {
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.engineering-upload-copy,
+.engineering-upload form,
+.engineering-results-head,
+.engineering-job {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.engineering-upload form {
+  min-width: min(560px, 100%);
+}
+
+.engineering-upload input {
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.engineering-job {
+  padding: 14px 16px;
+  color: var(--accent-strong);
+}
+
+.engineering-job.error {
+  color: var(--danger);
+  border-color: #efc6c6;
+  background: #fff4f4;
+}
+
+.engineering-job div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.engineering-job span,
+.engineering-job small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.engineering-results {
+  min-width: 0;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.engineering-results-head {
+  justify-content: space-between;
+}
+
+.result-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.result-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 9px 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.result-tabs button.active {
+  border-bottom-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.engineering-search {
+  width: min(420px, 100%);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #fff;
+  color: var(--muted);
+}
+
+.engineering-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+}
+
+.engineering-table-wrap {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.engineering-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.engineering-table th,
+.engineering-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.engineering-table th {
+  position: sticky;
+  top: 0;
+  background: var(--panel-soft);
+  color: var(--accent-strong);
+  text-transform: capitalize;
+}
+
+.engineering-table tbody tr:hover {
+  background: #f9fbfa;
+}
+
+.engineering-empty {
+  padding: 28px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  text-align: center;
+}
+
 @media (max-width: 860px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -364,5 +585,19 @@ button {
 
   .topbar {
     align-items: flex-start;
+  }
+
+  .engineering-topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .engineering-upload,
+  .engineering-upload form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .engineering-upload form {
+    min-width: 0;
   }
 }
